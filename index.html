@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rokan Portfolio 3D</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/R.svg" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-CZQi81IC.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Cszybhum.css">
+</head>
+<body>
+    <canvas class="webgl"></canvas>
+
+    <div id="ui-overlay">
+      <header>
+            <div class="logo">ROKAN.</div>
+            
+            <button id="audio-btn" class="audio-btn">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <span id="audio-text">ON</span>
+            </button>
+        </header>
+
+        <div id="detail-panel" class="overlay">
+        <div class="modal-card">
+            <div class="modal-image-col">
+                <img id="panel-image" src="" alt="Project Image">
+            </div>
+
+            <div class="modal-content-col">
+                <button id="close-btn" class="close-btn">&times;</button>
+                
+                <span id="panel-kicker" class="modal-kicker">CATEGORY</span>
+                <h2 id="panel-title" class="modal-title">Judul Project</h2>
+                <p id="panel-desc" class="modal-desc">Deskripsi project akan muncul di sini...</p>
+                
+                <div id="panel-dynamic-content"></div>
+
+                <a id="panel-link" href="#" target="_blank" class="modal-btn">VISIT PROJECT</a>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="preloader">
+        <div class="loader-content">
+            <h1>ROKAN.</h1>
+            <p>Interactive Portfolio Experience</p>
+            <button id="start-btn" disabled>LOADING...</button>
+        </div>
+    </div>
+
+</body>
+</html>
