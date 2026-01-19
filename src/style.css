@@ -1,0 +1,483 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    overflow: hidden;
+    background: #0a0a0e;
+    font-family: 'Inter', sans-serif;
+}
+
+.webgl {
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+    z-index: 1;
+}
+
+/* Label CSS3D yang menempel pada bola */
+.project-label {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.6);
+    padding: 5px 10px;
+    border-radius: 4px;
+    pointer-events: none; /* Biar klik tembus ke canvas */
+    user-select: none;
+    backdrop-filter: blur(4px);
+}
+
+/* --- STYLE MODAL MODERN (GLASSMORPHISM) --- */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px); /* Blur belakang */
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.visible { opacity: 1; pointer-events: auto; }
+
+.modal-card {
+    width: 90%;
+    max-width: 950px;
+    height: 80vh; /* Tinggi fix biar scroll di dalem */
+    background: #0f0f11; /* Hitam Matte Premium */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+    transform: translateY(30px);
+    transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.overlay.visible .modal-card { transform: translateY(0); }
+
+/* --- LAYOUT KIRI (GAMBAR) --- */
+.modal-image-col {
+    width: 45%;
+    background: #000;
+    position: relative;
+    overflow: hidden;
+}
+.modal-image-col img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+    transition: transform 0.6s ease;
+}
+.modal-card:hover .modal-image-col img { transform: scale(1.05); }
+
+/* --- LAYOUT KANAN (KONTEN) --- */
+.modal-content-col {
+    width: 55%;
+    padding: 50px;
+    color: white;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Scroll kalo konten panjang */
+    
+    /* Scrollbar Tipis */
+    scrollbar-width: thin;
+    scrollbar-color: #333 #111;
+}
+
+/* Custom Scrollbar Webkit */
+.modal-content-col::-webkit-scrollbar { width: 6px; }
+.modal-content-col::-webkit-scrollbar-track { background: #111; }
+.modal-content-col::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+
+/* TYPOGRAPHY */
+.modal-kicker { 
+    font-size: 0.75rem; 
+    letter-spacing: 3px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    margin-bottom: 10px;
+    display: block;
+}
+/* Warna Kicker Berubah via JS nanti */
+
+.modal-title { 
+    font-family: 'Playfair Display', serif; 
+    font-size: 2.5rem; 
+    margin: 0 0 20px 0; 
+    line-height: 1.1; 
+    color: #fff;
+}
+
+.modal-desc { 
+    font-size: 0.95rem; 
+    line-height: 1.7; 
+    color: #b0b0b0; 
+    margin-bottom: 30px; 
+    font-weight: 300;
+}
+
+/* --- TOMBOL --- */
+.close-btn {
+    position: absolute;
+    top: 25px;
+    right: 30px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    font-size: 2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    z-index: 10;
+}
+.close-btn:hover { color: #fff; }
+
+.modal-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-radius: 50px;
+    margin-top: 40px;
+    width: fit-content;
+    transition: all 0.3s;
+}
+.modal-btn:hover { background: white; color: black; border-color: white; }
+
+/* =========================================
+   STYLE KHUSUS PER TIPE KONTEN
+   ========================================= */
+
+/* 1. PROJECT: TAGS (Chip Style) */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+.tag {
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: #ddd;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 2. ABOUT: TIMELINE & SKILLS */
+.timeline-item {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 20px;
+    border-left: 2px solid rgba(0, 255, 204, 0.3); /* Garis Hijau Pudar */
+}
+.timeline-year {
+    display: block;
+    font-size: 0.75rem;
+    color: #00ffcc; /* Hijau Neon */
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.timeline-title {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #fff;
+}
+.timeline-place {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* 3. CERTIFICATION: CARD STYLE */
+.cert-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0;
+}
+.cert-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, rgba(255,170,0,0.1) 0%, rgba(0,0,0,0) 100%);
+    padding: 15px 20px;
+    border-radius: 8px;
+    border-left: 3px solid #ffaa00; /* Aksen Emas */
+    transition: background 0.3s;
+}
+.cert-item:hover {
+    background: linear-gradient(90deg, rgba(255,170,0,0.2) 0%, rgba(0,0,0,0) 100%);
+}
+.cert-info strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #fff;
+    margin-bottom: 2px;
+}
+.cert-info span {
+    font-size: 0.8rem;
+    color: #ffaa00; /* Text Emas */
+}
+.cert-link {
+    font-size: 0.75rem;
+    color: #888;
+    text-decoration: none;
+    border: 1px solid #444;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+.cert-link:hover {
+    border-color: #fff;
+    color: #fff;
+}
+
+#preloader {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    transition: opacity 1s ease;
+}
+
+#preloader.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loader-content {
+    text-align: center;
+}
+
+.loader-content h1 {
+    font-size: 4rem;
+    letter-spacing: 5px;
+    margin-bottom: 10px;
+    font-family: 'Playfair Display', serif;
+}
+
+#start-btn {
+    margin-top: 30px;
+    padding: 15px 40px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #888;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 2px;
+    cursor: not-allowed;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+#start-btn.active {
+    border-color: #fff;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+
+#start-btn.active:hover {
+    background: white;
+    color: black;
+    transform: scale(1.05);
+}
+
+.list-content {
+    color: #aaa;
+    line-height: 1.8;
+    white-space: pre-line; /* Agar enter/newline terbaca */
+}
+
+#panel-certs-list {
+    list-style: none;
+    padding: 0;
+}
+
+#panel-certs-list li {
+    background: rgba(255, 255, 255, 0.05);
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #ffaa00; /* Aksen Oranye */
+    transition: background 0.3s;
+}
+
+#panel-certs-list li:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#panel-certs-list a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+}
+
+#panel-certs-list span {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* Hilangkan kursor asli browser */
+html, body {
+    cursor: none; 
+}
+
+/* Pastikan elemen interaktif juga tidak memunculkan kursor asli */
+a, button, .project-label {
+    cursor: none !important;
+}
+
+/* --- CUSTOM CURSOR --- */
+.cursor-dot,
+.cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /* HAPUS transform: translate(-50%, -50%); dari sini karena sudah dihandle JS */
+    border-radius: 50%;
+    z-index: 9999;
+    pointer-events: none;
+    
+    /* Optimasi Performa */
+    will-change: transform; 
+    pointer-events: none;
+}
+
+.cursor-dot {
+    width: 8px;
+    height: 8px;
+    background-color: white;
+}
+
+.cursor-ring {
+    width: 40px;
+    height: 40px;
+    border: 1px solid white;
+    transition: transform 0.1s;
+}
+
+header {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    right: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none; /* Biar area kosong tidak halangi klik */
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: white;
+    letter-spacing: 2px;
+}
+
+.audio-btn {
+    pointer-events: auto; /* Aktifkan klik tombol */
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.audio-btn:hover {
+    background: white;
+    color: black;
+}
+
+/* Animasi Bar Equalizer */
+.bar {
+    width: 3px;
+    height: 10px;
+    background-color: currentColor;
+    animation: bounce 1s infinite ease-in-out;
+}
+
+.bar:nth-child(2) { animation-delay: 0.1s; height: 15px; }
+.bar:nth-child(3) { animation-delay: 0.2s; }
+
+.audio-btn.muted .bar {
+    animation: none;
+    height: 3px; /* Flat line kalau mati */
+    opacity: 0.5;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.5); }
+}
+
+.panel-content h4, 
+.panel-content p, 
+.tags, 
+.list-content li {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+/* Saat panel visible, anak-anaknya muncul */
+#detail-panel.visible .panel-content h4 { transition-delay: 0.1s; opacity: 1; transform: translateY(0); }
+#detail-panel.visible .panel-content p { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
+#detail-panel.visible .panel-content .tags { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+
+/* List item muncul berurutan (Manual delay logic or generic) */
+#detail-panel.visible .list-content li:nth-child(1) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+#detail-panel.visible .list-content li:nth-child(2) { transition-delay: 0.4s; opacity: 1; transform: translateY(0); }
+#detail-panel.visible .list-content li:nth-child(3) { transition-delay: 0.5s; opacity: 1; transform: translateY(0); }
+#detail-panel.visible .list-content li:nth-child(4) { transition-delay: 0.6s; opacity: 1; transform: translateY(0); }
+/* ... dst */
+#detail-panel.visible .list-content li {
+     opacity: 1; transform: translateY(0); /* Fallback */
+}
+
+/* Tambahkan class ini */
+.webgl {
+    transition: filter 0.8s ease; /* Transisi blur yang lambat & smooth */
+}
+
+/* Saat ada class 'blur', canvas jadi buram */
+.webgl.blur {
+    filter: blur(8px) brightness(0.6); /* Blur + Gelap dikit biar teks terbaca */
+    transform: scale(1.02); /* Zoom dikit biar pinggiran blur gak bocor */
+}
+
+.dud {
+    color: #555; /* Warna abu gelap untuk huruf acak */
+    opacity: 0.7;
+}
