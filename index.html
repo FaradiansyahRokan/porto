@@ -1,56 +1,60 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rokan Portfolio 3D</title>
-    <link rel="icon" type="image/svg+xml" href="assets/R.svg" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Rokan S.F. — Interstellar Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
-    <canvas class="webgl"></canvas>
 
-    <div id="ui-overlay">
-      <header>
-            <div class="logo">ROKAN.</div>
-            
-            <button id="audio-btn" class="audio-btn">
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <div class="bar"></div>
-                <span id="audio-text">ON</span>
-            </button>
-        </header>
-
-        <div id="detail-panel" class="overlay">
-        <div class="modal-card">
-            <div class="modal-image-col">
-                <img id="panel-image" src="" alt="Project Image">
-            </div>
-
-            <div class="modal-content-col">
-                <button id="close-btn" class="close-btn">&times;</button>
-                
-                <span id="panel-kicker" class="modal-kicker">CATEGORY</span>
-                <h2 id="panel-title" class="modal-title">Judul Project</h2>
-                <p id="panel-desc" class="modal-desc">Deskripsi project akan muncul di sini...</p>
-                
-                <div id="panel-dynamic-content"></div>
-
-                <a id="panel-link" href="#" target="_blank" class="modal-btn">VISIT PROJECT</a>
-            </div>
-        </div>
-    </div>
-    </div>
-
+    <!-- PRELOADER -->
     <div id="preloader">
         <div class="loader-content">
-            <h1>ROKAN.</h1>
-            <p>Interactive Portfolio Experience</p>
-            <button id="start-btn" disabled>LOADING...</button>
+            <h1>ROKAN S.F.</h1>
+            <p class="sub">Founder · Engineer · Architect</p>
+            <div class="bar-track">
+                <div class="bar-fill"></div>
+            </div>
+            <button id="start-btn" disabled>// INITIALIZING... //</button>
         </div>
     </div>
 
-    <script type="module" src="src/main.js"></script>
+    <!-- THREE.JS CANVAS -->
+    <canvas class="webgl"></canvas>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">RSF</div>
+        <button class="audio-btn" id="audio-btn">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <span id="audio-text">SFX</span>
+        </button>
+    </header>
+
+    <!-- HINT -->
+    <p class="hint-text" style="display:none;">— click a planet to explore —</p>
+
+    <!-- MODAL OVERLAY -->
+    <div id="detail-panel" class="overlay">
+        <div class="modal-card">
+            <div class="modal-image-col">
+                <img id="panel-image" src="" alt=""/>
+            </div>
+            <div class="modal-content-col">
+                <button class="close-btn" id="close-btn">✕</button>
+                <span class="modal-kicker" id="panel-kicker"></span>
+                <h2 class="modal-title" id="panel-title"></h2>
+                <p class="modal-desc" id="panel-desc"></p>
+                <div id="panel-dynamic-content"></div>
+                <a class="modal-btn" id="panel-link" href="#" target="_blank">View Project ↗</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

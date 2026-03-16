@@ -1,146 +1,517 @@
 import * as THREE from 'three';
-import gsap from 'gsap'; // <--- JANGAN LUPA IMPORT INI
+import gsap from 'gsap';
 import Experience from '../Experience.js';
 
+/**
+ * Background — pure particle/shader based, ZERO large solid geometry.
+ * No BackSide spheres with displacement, no PlaneGeometry, no large Torus rings.
+ * Everything is either: Points (particles), Lines, or the outer shell sphere (no displacement, no rotation).
+ */
 export default class Background {
     constructor() {
         this.experience = new Experience();
         this.scene = this.experience.scene;
-        this.time = this.experience.time;
+        this.time  = this.experience.time;
+        this.pulsarMats = [];
+        this.auroraLines = [];
 
-        this.setGeometry();
-        this.setMaterial();
-        this.setMesh();
+        // Sky: handled by renderer clearColor — no sphere geometry needed
+        this.buildStarField();      // 3-layer star particles
+        this.buildGalaxyDisk();     // Spiral arm particles
+        this.buildNebulaDust();     // Large soft dust clouds (particles)
+        this.buildCosmicDust();     // Fine floating dust
+        this.buildPulsarBeams();    // Pulsar line beams
+        this.buildWormholeRings();  // Wormhole: stacked torus particles, NOT mesh
+        this.buildGodRays();        // God ray lines from center
+        this.buildAuroraLines();    // Aurora: lines only, no solid torus mesh
     }
 
-    setGeometry() {
-        this.geometry = new THREE.SphereGeometry(1000, 128, 128);
+    /* ── STAR FIELD ─────────────────────────────────────────────── */
+    buildStarField() {
+        this.starGroups = [];
+        const layers = [
+            { count: 12000, minR: 400, maxR: 800, minS: 0.3, maxS: 1.1, speed: 1.0, alpha: 0.75 },
+            { count:  3000, minR: 200, maxR: 400, minS: 0.6, maxS: 2.0, speed: 1.6, alpha: 0.85 },
+            { count:   600, minR:  80, maxR: 280, minS: 1.2, maxS: 4.5, speed: 2.2, alpha: 0.92 },
+        ];
+
+        layers.forEach(cfg => {
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(cfg.count * 3);
+            const sz  = new Float32Array(cfg.count);
+            const ph  = new Float32Array(cfg.count);
+
+            for (let i = 0; i < cfg.count; i++) {
+                const r = cfg.minR + Math.random() * (cfg.maxR - cfg.minR);
+                const t = Math.random() * Math.PI * 2;
+                const p = Math.acos(2 * Math.random() - 1);
+                pos[i*3]   = r * Math.sin(p) * Math.cos(t);
+                pos[i*3+1] = r * Math.sin(p) * Math.sin(t);
+                pos[i*3+2] = r * Math.cos(p);
+                sz[i]  = cfg.minS + Math.random() * (cfg.maxS - cfg.minS);
+                ph[i]  = Math.random() * Math.PI * 2;
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('aSize',    new THREE.BufferAttribute(sz, 1));
+            geo.setAttribute('aPhase',   new THREE.BufferAttribute(ph, 1));
+
+            const mat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime:  { value: 0 },
+                    uPR:    { value: Math.min(this.experience.sizes.pixelRatio, 2) },
+                    uAlpha: { value: cfg.alpha },
+                    uSpd:   { value: cfg.speed },
+                },
+                vertexShader: `
+                    attribute float aSize, aPhase;
+                    uniform float uTime, uPR, uSpd;
+                    varying float vT;
+                    void main(){
+                        vT = 0.4 + 0.6 * abs(sin(uTime * uSpd + aPhase));
+                        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                        gl_Position = projectionMatrix * mv;
+                        // Hard clamp — prevents giant points near camera
+                        float sz = aSize * uPR * vT * (350.0 / -mv.z);
+                        gl_PointSize = clamp(sz, 0.0, 10.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uAlpha;
+                    varying float vT;
+                    void main(){
+                        float d = length(gl_PointCoord - 0.5);
+                        if(d > 0.5) discard;
+                        float a = (1.0 - d * 2.0) * vT * uAlpha;
+                        // Star color: cold blue-white to warm yellow
+                        vec3 cold = vec3(0.78, 0.84, 1.0);
+                        vec3 warm = vec3(1.0,  0.93, 0.75);
+                        gl_FragColor = vec4(mix(cold, warm, vT * 0.4), a);
+                    }
+                `,
+                transparent: true,
+                depthWrite:  false,
+                blending:    THREE.AdditiveBlending,
+            });
+
+            const pts = new THREE.Points(geo, mat);
+            this.scene.add(pts);
+            this.starGroups.push({ pts, mat });
+        });
     }
 
-    setMaterial() {
-        this.material = new THREE.ShaderMaterial({
-            side: THREE.BackSide,
-            
+    /* ── GALAXY DISK ────────────────────────────────────────────── */
+    buildGalaxyDisk() {
+        const count = 10000;
+        const geo   = new THREE.BufferGeometry();
+        const pos   = new Float32Array(count * 3);
+        const rand  = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+            const arm     = Math.floor(Math.random() * 3);
+            const t       = Math.random();
+            const r       = 80 + t * 600;
+            const spiral  = t * Math.PI * 4 + (arm * Math.PI * 2 / 3);
+            const spread  = (1 - t) * 0.35 + 0.04;
+            const angle   = spiral + (Math.random() - 0.5) * spread * 2;
+
+            pos[i*3]   = r * Math.cos(angle);
+            pos[i*3+1] = (Math.random() - 0.5) * r * 0.06;
+            pos[i*3+2] = r * Math.sin(angle);
+            rand[i]    = Math.random();
+        }
+
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('aRand',    new THREE.BufferAttribute(rand, 1));
+
+        this.galaxyMat = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0 },
-                uColor: { value: new THREE.Color(0xffffff) }, // Warna Puncak
-                uDeepColor: { value: new THREE.Color(0x000000) } // Warna Lembah
+                uPR:   { value: Math.min(this.experience.sizes.pixelRatio, 2) },
             },
             vertexShader: `
-                uniform float uTime;
-                varying float vNoise;
-                varying vec3 vNormal;
-
-                // --- NOISE FUNCTION ---
-                vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
-                vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
-                float snoise(vec3 v){ 
-                    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-                    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-                    vec3 i  = floor(v + dot(v, C.yyy) );
-                    vec3 x0 = v - i + dot(i, C.xxx);
-                    vec3 g = step(x0.yzx, x0.xyz);
-                    vec3 l = 1.0 - g;
-                    vec3 i1 = min( g.xyz, l.zxy );
-                    vec3 i2 = max( g.xyz, l.zxy );
-                    vec3 x1 = x0 - i1 + 1.0 * C.xxx;
-                    vec3 x2 = x0 - i2 + 2.0 * C.xxx;
-                    vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
-                    i = mod(i, 289.0 );
-                    vec4 p = permute( permute( i.y + vec4(0.0, i1.y, i2.y, 1.0 )) + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-                    float n_ = 0.142857142857;
-                    vec3 ns = n_ * D.wyz - D.xzx;
-                    vec4 j = p - 49.0 * floor(p * ns.z *ns.z);
-                    vec4 x_ = floor(j * ns.z);
-                    vec4 y_ = floor(j - 7.0 * x_ );
-                    vec4 x = x_ *ns.x + ns.yyyy;
-                    vec4 y = y_ *ns.x + ns.yyyy;
-                    vec4 h = 1.0 - abs(x) - abs(y);
-                    vec4 b0 = vec4( x.xy, y.xy );
-                    vec4 b1 = vec4( x.zw, y.zw );
-                    vec4 s0 = floor(b0)*2.0 + 1.0;
-                    vec4 s1 = floor(b1)*2.0 + 1.0;
-                    vec4 sh = -step(h, vec4(0.0));
-                    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
-                    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
-                    vec3 p0 = vec3(a0.xy,h.x);
-                    vec3 p1 = vec3(a0.zw,h.y);
-                    vec3 p2 = vec3(a1.xy,h.z);
-                    vec3 p3 = vec3(a1.zw,h.w);
-                    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
-                    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
-                    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-                    m = m * m; 
-                    return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) ); 
-                } 
-
-                void main() { 
-                    vNormal = normal;
-                    vec3 noisePos = normalize(position) * 1.2; 
-                    float noise = snoise(vec3(noisePos.x, noisePos.y, noisePos.z + uTime * 0.2));
-                    vNoise = noise;
-                    vec3 newPosition = position + normal * (noise * 300.0);
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0); 
+                attribute float aRand;
+                uniform float uTime, uPR;
+                varying float vRand, vR;
+                void main(){
+                    vRand = aRand;
+                    float r     = length(position.xz);
+                    float spd   = 0.012 / max(r * 0.007, 1.0);
+                    float angle = atan(position.z, position.x) + uTime * spd;
+                    vec3 p = vec3(cos(angle) * r, position.y, sin(angle) * r);
+                    vR = r;
+                    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    float sz = (0.4 + aRand * 1.2) * (1.0 - r / 700.0) * uPR * 250.0 / -mv.z;
+                    gl_PointSize = clamp(sz, 0.0, 6.0);
                 }
             `,
             fragmentShader: `
-                varying float vNoise;
-                uniform vec3 uColor;
-                uniform vec3 uDeepColor;
-
-                void main() {
-                    float mixStrength = vNoise * 0.5 + 0.5;
-                    mixStrength = smoothstep(0.0, 1.0, mixStrength);
-                    vec3 color = mix(uDeepColor, uColor, mixStrength); 
-                    gl_FragColor = vec4(color, 1.0); 
+                varying float vRand, vR;
+                void main(){
+                    float d = length(gl_PointCoord - 0.5);
+                    if(d > 0.5) discard;
+                    float fade = 1.0 - vR / 700.0;
+                    float a    = (1.0 - d * 2.0) * fade * (0.25 + vRand * 0.4);
+                    gl_FragColor = vec4(vec3(0.7 + vRand * 0.3), a);
                 }
             `,
-            wireframe: true 
+            transparent: true,
+            depthWrite:  false,
+            blending:    THREE.AdditiveBlending,
+        });
+
+        this.galaxyDisk = new THREE.Points(geo, this.galaxyMat);
+        this.scene.add(this.galaxyDisk);
+    }
+
+    /* ── NEBULA DUST (large soft clouds) ────────────────────────── */
+    buildNebulaDust() {
+        const count = 250;
+        const geo   = new THREE.BufferGeometry();
+        const pos   = new Float32Array(count * 3);
+        const sz    = new Float32Array(count);
+        const ph    = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+            const r = 150 + Math.random() * 500;
+            const t = Math.random() * Math.PI * 2;
+            const p = Math.acos(2 * Math.random() - 1);
+            pos[i*3]   = r * Math.sin(p) * Math.cos(t);
+            pos[i*3+1] = r * Math.sin(p) * Math.sin(t) * 0.5;
+            pos[i*3+2] = r * Math.cos(p);
+            sz[i]  = 60 + Math.random() * 120;
+            ph[i]  = Math.random() * Math.PI * 2;
+        }
+
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('aSize',    new THREE.BufferAttribute(sz, 1));
+        geo.setAttribute('aPhase',   new THREE.BufferAttribute(ph, 1));
+
+        this.nebulaMat = new THREE.ShaderMaterial({
+            uniforms: { uTime: { value: 0 }, uPR: { value: Math.min(this.experience.sizes.pixelRatio, 2) } },
+            vertexShader: `
+                attribute float aSize, aPhase;
+                uniform float uPR;
+                void main(){
+                    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    // Nebula clouds: large BUT clamped hard so they can't be > 300px
+                    float sz = aSize * uPR * (800.0 / -mv.z);
+                    gl_PointSize = clamp(sz, 0.0, 300.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                void main(){
+                    vec2 uv = gl_PointCoord - 0.5;
+                    float d = length(uv);
+                    if(d > 0.5) discard;
+                    float a = smoothstep(0.5, 0.0, d) * 0.055;
+                    gl_FragColor = vec4(vec3(0.18), a);
+                }
+            `,
+            transparent: true,
+            depthWrite:  false,
+            blending:    THREE.AdditiveBlending,
+        });
+
+        this.nebulaDust = new THREE.Points(geo, this.nebulaMat);
+        this.scene.add(this.nebulaDust);
+    }
+
+    /* ── FINE COSMIC DUST ───────────────────────────────────────── */
+    buildCosmicDust() {
+        const count = 5000;
+        const geo   = new THREE.BufferGeometry();
+        const pos   = new Float32Array(count * 3);
+        const rand  = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+            const r = 25 + Math.random() * 350;
+            const t = Math.random() * Math.PI * 2;
+            const p = Math.acos(2 * Math.random() - 1);
+            pos[i*3]   = r * Math.sin(p) * Math.cos(t);
+            pos[i*3+1] = r * Math.sin(p) * Math.sin(t);
+            pos[i*3+2] = r * Math.cos(p);
+            rand[i] = Math.random();
+        }
+
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('aRand',    new THREE.BufferAttribute(rand, 1));
+
+        this.dustMat = new THREE.ShaderMaterial({
+            uniforms: { uTime: { value: 0 }, uPR: { value: Math.min(this.experience.sizes.pixelRatio, 2) } },
+            vertexShader: `
+                attribute float aRand;
+                uniform float uTime, uPR;
+                void main(){
+                    vec3 p = position;
+                    p.y += sin(uTime * aRand * 0.4 + aRand * 6.28) * 1.0;
+                    p.x += cos(uTime * aRand * 0.3 + aRand * 3.14) * 0.6;
+                    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    float sz = (0.8 + aRand * 1.5) * uPR * (180.0 / -mv.z);
+                    gl_PointSize = clamp(sz, 0.0, 8.0);
+                }
+            `,
+            fragmentShader: `
+                void main(){
+                    float d = length(gl_PointCoord - 0.5);
+                    if(d > 0.5) discard;
+                    gl_FragColor = vec4(vec3(0.8), (1.0 - d * 2.0) * 0.18);
+                }
+            `,
+            transparent: true,
+            depthWrite:  false,
+            blending:    THREE.AdditiveBlending,
+        });
+
+        this.cosmicDust = new THREE.Points(geo, this.dustMat);
+        this.scene.add(this.cosmicDust);
+    }
+
+    /* ── PULSAR BEAMS (lines only) ──────────────────────────────── */
+    buildPulsarBeams() {
+        this.pulsarGroup = new THREE.Group();
+        this.scene.add(this.pulsarGroup);
+
+        [
+            { pos: new THREE.Vector3(320, 90, -420),  phase: 0 },
+            { pos: new THREE.Vector3(-460, -70, 210), phase: 2.1 },
+        ].forEach(({ pos, phase }) => {
+            const mat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 }, uPhase: { value: phase } },
+                vertexShader: `
+                    attribute float aT;
+                    uniform float uTime, uPhase;
+                    varying float vT;
+                    void main(){
+                        vT = aT;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime, uPhase;
+                    varying float vT;
+                    void main(){
+                        float pulse = pow(abs(sin(uTime * 3.0 + uPhase)), 10.0);
+                        float a = (1.0 - vT) * 0.07 * pulse;
+                        gl_FragColor = vec4(1.0, 1.0, 1.0, a);
+                    }
+                `,
+                transparent: true,
+                depthWrite:  false,
+                blending:    THREE.AdditiveBlending,
+            });
+
+            [-1, 1].forEach(dir => {
+                const pts   = [];
+                const beamDir = new THREE.Vector3(dir, 0.05 * dir, 0.08).normalize();
+                for (let i = 0; i <= 50; i++) {
+                    pts.push(pos.clone().addScaledVector(beamDir, (i / 50) * 650));
+                }
+                const geo   = new THREE.BufferGeometry().setFromPoints(pts);
+                const tArr  = new Float32Array(51);
+                for (let i = 0; i <= 50; i++) tArr[i] = i / 50;
+                geo.setAttribute('aT', new THREE.BufferAttribute(tArr, 1));
+                this.pulsarGroup.add(new THREE.Line(geo, mat));
+            });
+
+            // Pulsar core dot (small sphere, tiny)
+            const dotMat = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 }, uPhase: { value: phase } },
+                vertexShader:   `void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+                fragmentShader: `uniform float uTime, uPhase; void main(){ float p = pow(abs(sin(uTime*3.0+uPhase)),4.0); gl_FragColor = vec4(1.0,1.0,1.0,p*0.5); }`,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+            });
+            const dot = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 8), dotMat);
+            dot.position.copy(pos);
+            this.pulsarGroup.add(dot);
+            this.pulsarMats.push({ mat, dotMat });
         });
     }
 
-    setMesh() {
-        this.mesh = new THREE.Mesh(this.geometry, this.material);
-        this.mesh.position.set(0, 0, 0); 
-        this.scene.add(this.mesh);
+    /* ── WORMHOLE RINGS (particles only, no solid torus mesh) ───── */
+    buildWormholeRings() {
+        // Use a Points system arranged in rings — NOT TorusGeometry meshes
+        // This completely avoids any solid geometry that could show as white shape
+        const center = new THREE.Vector3(-380, 40, 200);
+        const radii  = [12, 22, 34, 48, 62, 76, 88];
+        const allPos = [];
+        const allSz  = [];
+        const allPh  = [];
+
+        radii.forEach((r, ri) => {
+            const count = Math.floor(60 + r * 1.8);
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                allPos.push(
+                    center.x + Math.cos(angle) * r,
+                    center.y + Math.sin(angle) * r,
+                    center.z
+                );
+                allSz.push(0.4 + (radii.length - ri) * 0.15);
+                allPh.push(angle + ri * 0.7);
+            }
+        });
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(allPos), 3));
+        geo.setAttribute('aSize',    new THREE.BufferAttribute(new Float32Array(allSz),  1));
+        geo.setAttribute('aPhase',   new THREE.BufferAttribute(new Float32Array(allPh),  1));
+
+        this.wormholeMat = new THREE.ShaderMaterial({
+            uniforms: { uTime: { value: 0 }, uPR: { value: Math.min(this.experience.sizes.pixelRatio, 2) } },
+            vertexShader: `
+                attribute float aSize, aPhase;
+                uniform float uTime, uPR;
+                varying float vBright;
+                void main(){
+                    // Rotate rings
+                    float angle = aPhase + uTime * 0.8;
+                    float r = length(position.xy - vec2(-380.0, 40.0)); // approx
+                    vBright = 0.3 + 0.7 * abs(sin(uTime * 1.2 + aPhase));
+                    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mv;
+                    float sz = aSize * uPR * (400.0 / -mv.z);
+                    gl_PointSize = clamp(sz, 0.0, 6.0);
+                }
+            `,
+            fragmentShader: `
+                varying float vBright;
+                void main(){
+                    float d = length(gl_PointCoord - 0.5);
+                    if(d > 0.5) discard;
+                    float a = (1.0 - d * 2.0) * vBright * 0.45;
+                    gl_FragColor = vec4(vec3(0.85), a);
+                }
+            `,
+            transparent: true,
+            depthWrite:  false,
+            blending:    THREE.AdditiveBlending,
+        });
+
+        this.wormholePoints = new THREE.Points(geo, this.wormholeMat);
+        this.scene.add(this.wormholePoints);
     }
 
-    // --- FUNGSI YG HILANG ---
+    /* ── GOD RAYS ───────────────────────────────────────────────── */
+    buildGodRays() {
+        this.godRayGroup = new THREE.Group();
+        this.scene.add(this.godRayGroup);
+
+        for (let i = 0; i < 14; i++) {
+            const angle   = (i / 14) * Math.PI * 2;
+            const spread  = (Math.random() - 0.5) * 0.22;
+            const len     = 300 + Math.random() * 200;
+            const pts     = [
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(
+                    Math.cos(angle + spread) * len,
+                    (Math.random() - 0.5) * 60,
+                    Math.sin(angle + spread) * len
+                ),
+            ];
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({
+                color:       0xffffff,
+                transparent: true,
+                opacity:     0.008 + Math.random() * 0.01,
+                blending:    THREE.AdditiveBlending,
+                depthWrite:  false,
+            });
+            this.godRayGroup.add(new THREE.Line(geo, mat));
+        }
+    }
+
+    /* ── AURORA LINES (lines only, never solid torus) ───────────── */
+    buildAuroraLines() {
+        // Replace torus mesh rings with point-sampled circles
+        // No MeshBasicMaterial at all here
+        this.auroraGroup = new THREE.Group();
+        this.scene.add(this.auroraGroup);
+
+        const configs = [
+            { r: 220, count: 300, op: 0.06, rx: 0.3,  rz: 0.1,  spd: { x: 0.00015, y: 0.0002,  z: 0.0001 } },
+            { r: 310, count: 380, op: 0.04, rx: 1.1,  rz: 0.4,  spd: { x: 0.00008, y: 0.00015, z: 0.0002 } },
+            { r: 390, count: 460, op: 0.05, rx: 0.7,  rz: 1.2,  spd: { x: 0.0002,  y: 0.0001,  z: 0.00005 } },
+            { r: 470, count: 540, op: 0.03, rx: 1.5,  rz: 0.8,  spd: { x: 0.0001,  y: 0.00008, z: 0.00018 } },
+            { r: 560, count: 620, op: 0.025,rx: 0.4,  rz: 0.6,  spd: { x: 0.00012, y: 0.00018, z: 0.00007 } },
+        ];
+
+        this.auroraRings = configs.map(cfg => {
+            const pts = [];
+            for (let i = 0; i <= cfg.count; i++) {
+                const a = (i / cfg.count) * Math.PI * 2;
+                pts.push(new THREE.Vector3(Math.cos(a) * cfg.r, 0, Math.sin(a) * cfg.r));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({
+                color:       0xffffff,
+                transparent: true,
+                opacity:     cfg.op,
+                blending:    THREE.AdditiveBlending,
+                depthWrite:  false,
+            });
+            const line = new THREE.Line(geo, mat);
+            line.rotation.x = cfg.rx;
+            line.rotation.z = cfg.rz;
+            line.userData.spd = cfg.spd;
+            this.auroraGroup.add(line);
+            return line;
+        });
+    }
+
+    /* ── COLOR MOOD ─────────────────────────────────────────────── */
     animateColor(colorHex) {
-        gsap.to(this.material.uniforms.uColor.value, { 
-            r: new THREE.Color(colorHex).r,
-            g: new THREE.Color(colorHex).g,
-            b: new THREE.Color(colorHex).b,
-            duration: 1.5,
-            ease: "power2.inOut"
-        });
-
-        const deepColor = new THREE.Color(colorHex);
-        deepColor.multiplyScalar(0.1); 
-
-        gsap.to(this.material.uniforms.uDeepColor.value, { 
-            r: deepColor.r,
-            g: deepColor.g,
-            b: deepColor.b,
-            duration: 1.5,
-            ease: "power2.inOut"
-        });
+        // No shell mat — mood via dust/star brightness only
     }
-    
     resetColor() {
-        gsap.to(this.material.uniforms.uColor.value, { 
-            r: 1, g: 1, b: 1, 
-            duration: 1.5 
-        });
-        gsap.to(this.material.uniforms.uDeepColor.value, { 
-            r: 0, g: 0, b: 0, 
-            duration: 1.5 
-        });
+        // No shell mat
     }
 
+    /* ── UPDATE ─────────────────────────────────────────────────── */
     update() {
-        this.material.uniforms.uTime.value = this.experience.time.elapsed;
-        this.mesh.rotation.y = this.experience.time.elapsed * 0.05;
-        this.mesh.rotation.z = this.experience.time.elapsed * 0.02;
+        const t = this.experience.time.elapsed;
+
+        // Stars
+        this.starGroups.forEach((s, i) => {
+            s.mat.uniforms.uTime.value = t;
+            s.pts.rotation.y = t * (0.0012 - i * 0.0003);
+            s.pts.rotation.x = t * 0.0002;
+        });
+
+        // Galaxy disk
+        if (this.galaxyMat) this.galaxyMat.uniforms.uTime.value = t;
+
+        // Nebula + dust
+        if (this.nebulaMat) this.nebulaMat.uniforms.uTime.value = t;
+        if (this.nebulaDust) this.nebulaDust.rotation.y = t * 0.003;
+        if (this.dustMat)   this.dustMat.uniforms.uTime.value = t;
+        if (this.cosmicDust) this.cosmicDust.rotation.y = -t * 0.002;
+
+        // Wormhole rings spin
+        if (this.wormholeMat) this.wormholeMat.uniforms.uTime.value = t;
+        if (this.wormholePoints) this.wormholePoints.rotation.z = t * 0.5;
+
+        // God rays
+        if (this.godRayGroup) this.godRayGroup.rotation.y = t * 0.006;
+
+        // Pulsar beams
+        this.pulsarMats.forEach(p => {
+            p.mat.uniforms.uTime.value = t;
+            p.dotMat.uniforms.uTime.value = t;
+        });
+        if (this.pulsarGroup) this.pulsarGroup.rotation.y = t * 0.035;
+
+        // Aurora rings
+        this.auroraRings.forEach(r => {
+            r.rotation.x += r.userData.spd.x;
+            r.rotation.y += r.userData.spd.y;
+            r.rotation.z += r.userData.spd.z;
+        });
     }
 }

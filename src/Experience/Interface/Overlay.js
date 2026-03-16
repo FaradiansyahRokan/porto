@@ -1,10 +1,11 @@
 import Experience from '../Experience.js';
+// 👇 1. IMPORT DATASETNYA LANGSUNG DI SINI
+import certificationDataSet from '../../data/certifications.js'; 
 
 export default class Overlay {
     constructor() {
         this.experience = new Experience();
         
-        // Elemen HTML (Pastikan ID ini ada di index.html)
         this.overlay = document.getElementById('detail-panel');
         this.closeBtn = document.getElementById('close-btn');
         
@@ -15,113 +16,101 @@ export default class Overlay {
         this.dynamicContent = document.getElementById('panel-dynamic-content');
         this.link = document.getElementById('panel-link');
 
-        // Event Close
         this.closeBtn.addEventListener('click', () => this.hide());
         this.overlay.addEventListener('click', (e) => {
             if (e.target === this.overlay) this.hide();
         });
     }
 
+    // Helper buat list (Experience/Skills)
+    createListFromText(text, labelTitle) {
+        if (!text) return null;
+        const container = document.createElement('div');
+        container.style.marginTop = '20px';
+        container.innerHTML = `<strong style="display:block; font-size:12px; color:#666; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">${labelTitle}</strong>`;
+        const ul = document.createElement('ul');
+        ul.style.listStyle = 'none';
+        ul.style.padding = '0';
+        
+        text.split('\n').forEach(item => {
+            if(item.trim().length > 0) {
+                const li = document.createElement('li');
+                li.style.cssText = 'font-size: 14px; color: #aaa; margin-bottom: 6px; padding-left: 15px; position: relative;';
+                li.innerHTML = `<span style="position: absolute; left: 0; top: 6px; width: 6px; height: 6px; background-color: #00ffcc; border-radius: 50%;"></span>${item.replace(/^-/, '').trim()}`;
+                ul.appendChild(li);
+            }
+        });
+        container.appendChild(ul);
+        return container;
+    }
+
     show(data) {
         this.experience.isModalOpen = true;
 
-        // 1. ISI DATA UMUM
-        this.image.src = data.image || 'https://placehold.co/800x600/111/fff?text=No+Image';
-        this.kicker.textContent = data.type || 'Showcase';
+        // Populate Data Dasar (Dari contentData.js)
+        this.image.src = data.image || 'https://placehold.co/800x600';
+        this.kicker.textContent = data.kicker || 'Showcase';
         this.title.textContent = data.title || 'Untitled';
-        this.desc.textContent = data.desc || 'No description provided.';
+        this.desc.textContent = data.desc || '';
         
-        // 2. ATUR WARNA AKSEN BERDASARKAN TIPE
-        this.kicker.style.color = '#ffffff'; // Default Putih
-        if (data.type === 'about') this.kicker.style.color = '#00ffcc'; // About = Hijau
-        if (data.type === 'certification') this.kicker.style.color = '#ffaa00'; // Cert = Emas
+        // Styling Header
+        this.kicker.style.color = data.type === 'about' ? '#00ffcc' : (data.type === 'project' ? '#ff0055' : '#fff');
+        this.link.style.display = (data.link) ? 'inline-block' : 'none';
+        if(data.link) this.link.href = data.link;
 
-        // 3. TOMBOL LINK (Tampilkan kalau ada)
-        if (data.link) {
-            this.link.href = data.link;
-            this.link.style.display = 'inline-block';
-            this.link.textContent = data.linkText || 'VISIT LINK';
-        } else {
-            this.link.style.display = 'none';
-        }
+        this.dynamicContent.innerHTML = ''; // Reset Konten
 
-        // 4. ISI KONTEN DINAMIS (Layout Khusus)
-        this.dynamicContent.innerHTML = ''; // Bersihkan isi lama
-
-        // --- Layout A: PROJECT (Tags) ---
+        // --- LOGIC: PROJECT ---
         if (data.type === 'project') {
-            if(data.tags) {
-                const label = document.createElement('div');
-                label.innerHTML = '<strong style="display:block; font-size:12px; color:#666; margin-bottom:10px; letter-spacing:1px;">TECHNOLOGIES</strong>';
-                this.dynamicContent.appendChild(label);
-
+            if (data.features) this.dynamicContent.appendChild(this.createListFromText(data.features, 'Features'));
+            if (data.tags) {
                 const tagsDiv = document.createElement('div');
-                tagsDiv.className = 'tags-container';
+                tagsDiv.style.marginTop = '20px';
                 data.tags.forEach(tag => {
                     const span = document.createElement('span');
-                    span.className = 'tag';
-                    span.textContent = tag;
+                    span.innerText = tag;
+                    span.style.cssText = 'background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:15px; font-size:12px; margin-right:5px; border:1px solid #444;';
                     tagsDiv.appendChild(span);
                 });
                 this.dynamicContent.appendChild(tagsDiv);
             }
         }
 
-        // --- Layout B: ABOUT ME (Timeline Experience) ---
+        // --- LOGIC: ABOUT (DI SINI KITA PANGGIL CERTIFICATE) ---
         if (data.type === 'about') {
-            // Judul Kecil
-            const label = document.createElement('div');
-            label.innerHTML = '<strong style="display:block; font-size:12px; color:#666; margin-bottom:15px; letter-spacing:1px; margin-top:20px;">EXPERIENCE</strong>';
-            this.dynamicContent.appendChild(label);
+            // 1. Experience & Skills (Dari contentData.js)
+            if (data.exp) this.dynamicContent.appendChild(this.createListFromText(data.exp, 'Experience'));
+            if (data.skills) this.dynamicContent.appendChild(this.createListFromText(data.skills, 'Skills'));
 
-            // Container Timeline
-            const timelineDiv = document.createElement('div');
-            // Cek apakah ada data experience
-            if (data.experience && Array.isArray(data.experience)) {
-                data.experience.forEach(exp => {
+            // 👇 2. PANGGIL DATA DARI FILE 'certificationDataSet.js'
+            // Kita cek variabel certificationDataSet yang udah di-import di atas
+            if (certificationDataSet && certificationDataSet.length > 0) {
+                
+                const label = document.createElement('div');
+                label.innerHTML = '<strong style="display:block; font-size:12px; color:#666; margin-bottom:15px; letter-spacing:1px; margin-top:30px;">LICENSES & CERTIFICATIONS</strong>';
+                this.dynamicContent.appendChild(label);
+
+                const grid = document.createElement('div');
+                grid.style.cssText = 'display: grid; gap: 10px;';
+
+                // Looping data dari file eksternal
+                certificationDataSet.forEach(cert => {
                     const item = document.createElement('div');
-                    item.className = 'timeline-item';
+                    item.style.cssText = 'background: rgba(255,255,255,0.05); padding: 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;';
+                    
                     item.innerHTML = `
-                        <span class="timeline-year">${exp.year}</span>
-                        <span class="timeline-title">${exp.title}</span>
-                        <span class="timeline-place">${exp.place}</span>
-                    `;
-                    timelineDiv.appendChild(item);
-                });
-            } else {
-                timelineDiv.innerHTML = '<p style="color:#666; font-size:14px;">No experience data listed.</p>';
-            }
-            this.dynamicContent.appendChild(timelineDiv);
-        }
-
-        // --- Layout C: CERTIFICATION (List Card) ---
-        if (data.type === 'certification') {
-             // Judul Kecil
-             const label = document.createElement('div');
-             label.innerHTML = '<strong style="display:block; font-size:12px; color:#666; margin-bottom:15px; letter-spacing:1px; margin-top:20px;">CREDENTIALS</strong>';
-             this.dynamicContent.appendChild(label);
-
-            const certUl = document.createElement('ul');
-            certUl.className = 'cert-list';
-            
-            if (data.certList && Array.isArray(data.certList)) {
-                data.certList.forEach(cert => {
-                    const li = document.createElement('li');
-                    li.className = 'cert-item';
-                    li.innerHTML = `
-                        <div class="cert-info">
-                            <strong>${cert.name}</strong>
-                            <span>${cert.issuer} • ${cert.year}</span>
+                        <div>
+                            <div style="color: #fff; font-size: 13px; font-weight: 600;">${cert.title}</div>
+                            <div style="color: #888; font-size: 11px;">${cert.issuer}</div>
                         </div>
-                        ${cert.link ? `<a href="${cert.link}" target="_blank" class="cert-link">Verify</a>` : ''}
+                        <a href="${cert.link}" target="_blank" style="color: #ffd700; font-size: 10px; border: 1px solid #ffd700; padding: 4px 8px; border-radius: 4px; text-decoration: none;">VERIFY</a>
                     `;
-                    certUl.appendChild(li);
+                    grid.appendChild(item);
                 });
+                this.dynamicContent.appendChild(grid);
             }
-            this.dynamicContent.appendChild(certUl);
         }
 
-        // 5. TAMPILKAN MODAL
         this.overlay.classList.add('visible');
     }
 
