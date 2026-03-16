@@ -7,11 +7,12 @@
 <title>Rokan S.F. — Interstellar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script type="module" crossorigin src="/porto/assets/index-BWnLInkR.js"></script>
-  <link rel="stylesheet" crossorigin href="/porto/assets/index-DluHGSCV.css">
+  <script type="module" crossorigin src="/porto/assets/index-BjsljbMM.js"></script>
+  <link rel="stylesheet" crossorigin href="/porto/assets/index-D2InBpcs.css">
 </head>
 <body>
 
+<!-- ── PRELOADER ──────────────────────────────── -->
 <div id="preloader">
     <div class="hud-lines"></div>
     <div class="loader-content">
@@ -23,50 +24,202 @@
     </div>
 </div>
 
+<!-- ── CANVAS ─────────────────────────────────── -->
 <canvas class="webgl"></canvas>
 
+<!-- ── HEADER ─────────────────────────────────── -->
 <header>
-    <div class="logo">RSF</div>
-    <button class="audio-btn" id="audio-btn">
-        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        <span id="audio-text">SFX</span>
-    </button>
+    <div class="logo" id="logo-trigger" title="Triple-click for something">RSF</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+        <button class="audio-btn" id="audio-btn">
+            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            <span id="audio-text">SFX</span>
+        </button>
+    </div>
 </header>
 
+<!-- ── HUD COORDINATES ────────────────────────── -->
 <div class="hud-coords" id="hud-coords">
     <div id="hud-x">X: 0.000</div>
     <div id="hud-y">Y: 0.000</div>
     <div id="hud-z">Z: 0.000</div>
-    <div style="margin-top:4px;opacity:.45;letter-spacing:.08em">SECTOR-7G · VOID CLASS</div>
+    <div id="hud-visitors" style="margin-top:5px;opacity:.4">ACTIVE: —</div>
+    <div id="hud-sims" style="opacity:.4">SIMS: —</div>
 </div>
 
+<!-- ── SCROLL HINT ────────────────────────────── -->
+<div class="scroll-hint" id="scroll-hint" style="display:none">
+    <div class="scroll-line"></div>
+    <span>SCROLL TO NAVIGATE</span>
+</div>
+
+<!-- ── WAYPOINT LABEL ─────────────────────────── -->
+<div class="waypoint-label" id="waypoint-label"></div>
+
+<!-- ── HINT ──────────────────────────────────── -->
 <p class="hint-text" id="hint-text" style="display:none">— tap a planet to explore —</p>
 
+<!-- ── MOBILE TOUCH ──────────────────────────── -->
 <div class="touch-indicator">
     <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="white" stroke-width="1.1" opacity=".28">
         <circle cx="13" cy="13" r="11"/><circle cx="13" cy="13" r="4.5"/>
     </svg>
-    <span style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(255,255,255,.25);letter-spacing:.14em">TAP</span>
+    <span style="font-family:'Space Mono',monospace;font-size:.42rem;color:rgba(255,255,255,.25);letter-spacing:.14em">DRAG</span>
 </div>
 
+<!-- ── GLITCH OVERLAY ────────────────────────── -->
+<div id="glitch-overlay">
+    <div class="glitch-scan"></div>
+    <div class="glitch-text">MATRIX MODE ACTIVE</div>
+    <div class="glitch-code" id="glitch-code"></div>
+    <div class="glitch-exit" onclick="window.experience?._triggerGlitch()">[ EXIT MATRIX ]</div>
+</div>
+
+<!-- ── SECRET MESSAGE ────────────────────────── -->
+<div id="secret-msg"></div>
+
+<!-- ── EASTER EGG HINTS (barely visible) ─────── -->
+<div class="ee-hint" id="ee-hint">
+    <span>// KONAMI · APEX · RSF · PALE · ⬤×5 //</span>
+</div>
+
+<!-- ── MODAL ─────────────────────────────────── -->
+<!-- ── MODAL — Cinematic Project Portal ──────────── -->
 <div id="detail-panel" class="overlay">
+    <!-- Particle canvas inside modal -->
+    <canvas id="modal-particles" class="modal-particles"></canvas>
+
     <div class="modal-card">
-        <div class="modal-image-col"><img id="panel-image" src="" alt=""/></div>
+        <!-- LEFT: Visual column -->
+        <div class="modal-visual-col">
+            <!-- Scanline overlay -->
+            <div class="modal-scanlines"></div>
+            <!-- Image -->
+            <img id="panel-image" class="modal-img" src="" alt=""/>
+            <!-- Image overlay gradient -->
+            <div class="modal-img-overlay"></div>
+            <!-- Corner decorations -->
+            <div class="modal-corner modal-corner--tl"></div>
+            <div class="modal-corner modal-corner--br"></div>
+            <!-- Status bar -->
+            <div class="modal-status-bar">
+                <span class="modal-status-dot"></span>
+                <span id="modal-status-text" class="modal-status-text">ACTIVE</span>
+                <span class="modal-status-coords" id="modal-coords">00.00 · 00.00</span>
+            </div>
+            <!-- Planet type badge -->
+            <div class="modal-type-badge" id="modal-type-badge">PROJECT</div>
+        </div>
+
+        <!-- RIGHT: Content column -->
         <div class="modal-content-col">
-            <button class="close-btn" id="close-btn">✕</button>
-            <span class="modal-kicker" id="panel-kicker"></span>
-            <h2 class="modal-title" id="panel-title"></h2>
+            <!-- Top bar -->
+            <div class="modal-topbar">
+                <div class="modal-topbar-left">
+                    <span class="modal-topbar-line"></span>
+                    <span class="modal-kicker" id="panel-kicker"></span>
+                </div>
+                <button class="close-btn" id="close-btn">
+                    <span class="close-icon">✕</span>
+                </button>
+            </div>
+
+            <!-- Title block -->
+            <div class="modal-title-block">
+                <h2 class="modal-title" id="panel-title"></h2>
+                <div class="modal-title-line"></div>
+            </div>
+
+            <!-- Description -->
             <p class="modal-desc" id="panel-desc"></p>
+
+            <!-- Dynamic content area -->
             <div id="panel-dynamic-content"></div>
-            <a class="modal-btn" id="panel-link" href="#" target="_blank">View Project ↗</a>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <a class="modal-btn" id="panel-link" href="#" target="_blank">
+                    <span class="modal-btn-text">Open Mission</span>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </a>
+                <div class="modal-footer-meta" id="modal-footer-meta"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-const msgs=['Scanning deep space...','Calibrating hyperdrive...','Mapping stellar coords...','Initializing quantum matrix...','Detecting dark matter...','Neural link active...','Loading dimension data...','Warping spacetime...'];
+// Status messages
+const msgs=['Scanning deep space...','Calibrating hyperdrive...','Mapping stellar coords...','Initializing quantum matrix...','Detecting dark matter...','Neural link active...','Loading dimension data...','Warping spacetime...','Analyzing anomalies...'];
 let mi=0;const el=document.getElementById('loader-status');
-setInterval(()=>{mi=(mi+1)%msgs.length;if(el&&!document.getElementById('start-btn').classList.contains('active'))el.textContent=msgs[mi];},1900);
+setInterval(()=>{mi=(mi+1)%msgs.length;if(el&&!document.getElementById('start-btn').classList.contains('active'))el.textContent=msgs[mi];},1800);
+
+// Glitch code rain
+const gc=document.getElementById('glitch-code');
+const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノ∇∆∑∏∫APEX RSF VOID NULL://';
+setInterval(()=>{
+    if(gc&&document.getElementById('glitch-overlay').classList.contains('active')){
+        const line=Array.from({length:24},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+        const d=document.createElement('div');d.textContent=line;d.style.opacity=.1+Math.random()*.35;
+        gc.appendChild(d);if(gc.children.length>18)gc.removeChild(gc.firstChild);
+    }
+},80);
+
+// BH click handler patch (called from World after BH is ready)
+window.addEventListener('bhClick',()=>window._bhClickCallback?.());
 </script>
+
+<!-- ── PALE BLUE DOT OVERLAY ─────────────────────── -->
+<div id="pbd-overlay">
+    <div class="pbd-dot"></div>
+    <div class="pbd-quote"></div>
+    <div class="pbd-sub">— scroll to return —</div>
+</div>
+
+<!-- ── REALITY COLLAPSE OVERLAY ──────────────────── -->
+<div id="rc-overlay">
+    <div class="rc-rain" id="rc-rain"></div>
+</div>
+
+<!-- ── DREAM ARCHIVE OVERLAY ─────────────────────── -->
+<div id="dream-overlay">
+    <div class="dream-fragment"></div>
+    <div class="dream-text"></div>
+    <div class="dream-source">— Memory Core Fragment //</div>
+</div>
+
+    <div class="arch-text">ARCHIPELAGO DYNAMICS<br><span>rooted in the islands · reaching for the stars</span></div>
+    <div class="arch-islands"></div>
+</div>
+
+<script>
+// Reality collapse rain
+const rcRain = document.getElementById('rc-rain');
+function spawnRCLine(){
+    if(!document.getElementById('rc-overlay').classList.contains('active')) return;
+    const d=document.createElement('div');
+    d.className='rc-line';
+    d.style.left=Math.random()*100+'%';
+    d.style.animationDuration=(.4+Math.random()*.6)+'s';
+    d.textContent=Array.from({length:18},()=>'01 アイウエ∇∑'[Math.floor(Math.random()*13)]).join('');
+    rcRain.appendChild(d);
+    setTimeout(()=>d.remove(),1200);
+}
+setInterval(spawnRCLine,40);
+
+// Archipelago particle islands (SVG silhouette)
+
+</script>
+
+
+<!-- ── PATIENCE OVERLAY ──────────────────────────────── -->
+<div id="patience-overlay">
+    <div class="patience-text"></div>
+    <div class="patience-sub">— stay still. breathe. —</div>
+</div>
+
+<!-- ── TEAR HINT (barely visible) ───────────────────── -->
+<div id="tear-hint">hold anywhere to tear reality</div>
+
 </body>
 </html>
