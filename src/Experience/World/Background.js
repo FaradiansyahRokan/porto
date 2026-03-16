@@ -46,7 +46,7 @@ export default class Background {
             geo.setAttribute('aSize',new THREE.BufferAttribute(sz,1));
             geo.setAttribute('aPhase',new THREE.BufferAttribute(ph,1));
             const mat=new THREE.ShaderMaterial({
-                uniforms:{uTime:{value:0},uPR:{value:this.PR},uA:{value:c.a},uSp:{value:c.sp}},
+                uniforms:{uTime:{value:0},uPR:{value:this.PR},uA:{value:c.a * (window._timeMode==='night'?1.25:window._timeMode==='day'?0.8:1.0)},uSp:{value:c.sp * (window._timeMode==='night'?1.3:window._timeMode==='day'?0.7:1.0)}},
                 vertexShader:`attribute float aSize,aPhase;uniform float uTime,uPR,uSp;varying float vT;
                     void main(){vT=.35+.65*abs(sin(uTime*uSp+aPhase));vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;gl_PointSize=clamp(aSize*uPR*vT*(360./-mv.z),0.,12.);}`,
                 fragmentShader:`uniform float uA;varying float vT;
@@ -97,10 +97,11 @@ export default class Background {
         }
         geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
         geo.setAttribute('aSize',new THREE.BufferAttribute(sz,1));
+        this._nebBrightness = window._timeMode==='day' ? 1.7 : window._timeMode==='night' ? 0.65 : 1.0;
         this.nebMat=new THREE.ShaderMaterial({
-            uniforms:{uPR:{value:this.PR}},
+            uniforms:{uPR:{value:this.PR},uBright:{value:this._nebBrightness}},
             vertexShader:`attribute float aSize;uniform float uPR;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;gl_PointSize=clamp(aSize*uPR*(700./-mv.z),0.,220.);}`,
-            fragmentShader:`void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.5)discard;float a=smoothstep(.5,0.,d)*.045;gl_FragColor=vec4(vec3(.85),a);}`,
+            fragmentShader:`uniform float uBright;void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.5)discard;float a=smoothstep(.5,0.,d)*.045*uBright;gl_FragColor=vec4(vec3(.85),a);}`,
             transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
         });
         this.nebPts=this._pts(geo,this.nebMat);

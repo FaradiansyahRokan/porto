@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import Experience from '../Experience.js';
 import Node from './Node.js';
 import Background from './Background.js';
+// import NeuralNetwork from './NeuralNetwork.js';
 import contentData from '../../data/contentData.js';
 import certificationData from '../../data/certifications.js';
 
@@ -27,8 +28,12 @@ export default class World {
         this._asteroids();
         this._cosmicObjects();   // Black hole, neutron star, dyson sphere, quasar
         this._supernova();       // Supernova remnant expanding shell
+        this._memoryCore();    // Dream Archive hidden object
+        this._setupBHClick();
         this._shootPool();
         this._touchSetup();
+
+        // this.neuralNetwork = new NeuralNetwork();
 
         this.isPaused = false;
         this._tm = {x:0,y:0}; this._sm = {x:0,y:0};
@@ -329,6 +334,162 @@ export default class World {
         this.cosmicGroup.add(dsGroup);
         this.dsGroup=dsGroup;
 
+        // ── 6. NEBULA (Pillars of Creation style) ──
+        // Dense particle cloud — towering gas columns
+        const nebPos=new THREE.Vector3(80,60,-220);
+        const nebGroup=new THREE.Group();nebGroup.position.copy(nebPos);
+        const pillarCount=3;
+        for(let pi=0;pi<pillarCount;pi++){
+            const pCount=this.M?120:320;
+            const pGeo=new THREE.BufferGeometry();
+            const pPos=new Float32Array(pCount*3),pSz=new Float32Array(pCount),pRand=new Float32Array(pCount);
+            const pillarX=(pi-1)*12, pillarH=25+pi*8;
+            for(let i=0;i<pCount;i++){
+                const h=Math.random()*pillarH;
+                const spread=(1-h/pillarH)*5+1;
+                pPos[i*3]=pillarX+(Math.random()-.5)*spread*2;
+                pPos[i*3+1]=h;
+                pPos[i*3+2]=(Math.random()-.5)*spread*2;
+                pSz[i]=2+Math.random()*4; pRand[i]=Math.random();
+            }
+            pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+            pGeo.setAttribute('aSize',new THREE.BufferAttribute(pSz,1));
+            pGeo.setAttribute('aRand',new THREE.BufferAttribute(pRand,1));
+            const pMat=new THREE.ShaderMaterial({
+                uniforms:{uTime:{value:0},uPR:{value:Math.min(this.experience.sizes.pixelRatio,2)},uIdx:{value:pi}},
+                vertexShader:`attribute float aSize,aRand;uniform float uTime,uPR,uIdx;varying float vR;
+                    void main(){vR=aRand;
+                    vec3 p=position;p.y+=sin(uTime*(aRand*.3+.1)+aRand*6.28)*.4;
+                    vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+                    gl_PointSize=clamp(aSize*uPR*(300./-mv.z),0.,18.);}`,
+                fragmentShader:`varying float vR;
+                    void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.5)discard;
+                    float a=smoothstep(.5,0.,d)*(.12+vR*.18);gl_FragColor=vec4(vec3(.88+vR*.12),a);}`,
+                transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
+            });
+            const pillar=new THREE.Points(pGeo,pMat);
+            nebGroup.add(pillar);
+            if(!this._nebMats)this._nebMats=[];
+            this._nebMats.push(pMat);
+        }
+        this.cosmicGroup.add(nebGroup);
+        this.nebGroup=nebGroup;
+
+        // ── 7. DARK MATTER HALO (invisible mass, visible lensing) ──
+        // Faint ring filaments suggesting dark matter concentration
+        const dmPos=new THREE.Vector3(-100,-25,50);
+        const dmGroup=new THREE.Group();dmGroup.position.copy(dmPos);
+        this.dmMat=new THREE.ShaderMaterial({
+            uniforms:{uTime:{value:0}},
+            vertexShader:`attribute float aPhase;uniform float uTime;varying float vP;
+                void main(){vP=aPhase;float wobble=sin(uTime*.2+aPhase)*0.02;
+                vec3 p=position*(1.+wobble);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+            fragmentShader:`uniform float uTime;varying float vP;
+                void main(){float p=abs(sin(uTime*.3+vP*4.))*.5+.5;float a=.025+p*.015;
+                gl_FragColor=vec4(vec3(1.),a);}`,
+            transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
+        });
+        // 4 nested elliptical filaments
+        [18,28,40,55].forEach((r,ri)=>{
+            const n=120+ri*40;
+            const pts=[],phases=[];
+            for(let i=0;i<=n;i++){
+                const a=(i/n)*Math.PI*2;
+                pts.push(new THREE.Vector3(Math.cos(a)*r,Math.sin(a)*r*.35,(Math.random()-.5)*r*.08));
+                phases.push(a);
+            }
+            const geo=new THREE.BufferGeometry().setFromPoints(pts);
+            geo.setAttribute('aPhase',new THREE.BufferAttribute(new Float32Array(phases),1));
+            const l=new THREE.Line(geo,this.dmMat);
+            l.rotation.x=-.3+ri*.15;l.rotation.z=ri*.2;
+            dmGroup.add(l);
+        });
+        dmGroup.userData.rotSpd=0.0006;
+        this.cosmicGroup.add(dmGroup);
+        this.dmGroup=dmGroup;
+
+        // ── 8. EXOPLANET SYSTEM (mini solar system) ──
+        const exoPos=new THREE.Vector3(150,40,100);
+        const exoGroup=new THREE.Group();exoGroup.position.copy(exoPos);
+        // Parent star (small, white-hot)
+        const starMat=new THREE.ShaderMaterial({
+            uniforms:{uTime:{value:0}},
+            vertexShader:`varying vec3 vN,vVP;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.);vVP=-mv.xyz;gl_Position=projectionMatrix*mv;}`,
+            fragmentShader:`uniform float uTime;varying vec3 vN,vVP;void main(){float f=pow(clamp(1.-dot(normalize(vVP),vN),0.,1.),2.);float p=.85+.15*sin(uTime*1.8);gl_FragColor=vec4(vec3(p*.9+f*.6),1.);}`,
+        });
+        exoGroup.add(new THREE.Mesh(new THREE.SphereGeometry(2.5,16,16),starMat));
+        // 4 exoplanets orbiting at different radii
+        this._exoPlanets=[];
+        [6,10,15,22].forEach((orb,ei)=>{
+            const pMat=new THREE.MeshStandardMaterial({color:0xaaaaaa,roughness:.9,metalness:.05,
+                emissive:0x111111,emissiveIntensity:.1});
+            const radius=.4+ei*.18;
+            const planet=new THREE.Mesh(new THREE.SphereGeometry(radius,12,12),pMat);
+            // Orbit line
+            const oPts=[];for(let i=0;i<=60;i++) oPts.push(new THREE.Vector3(Math.cos(i/60*Math.PI*2)*orb,0,Math.sin(i/60*Math.PI*2)*orb));
+            const oLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(oPts),
+                new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.04,blending:THREE.AdditiveBlending,depthWrite:false}));
+            exoGroup.add(oLine);exoGroup.add(planet);
+            this._exoPlanets.push({mesh:planet,orb,spd:.008-ei*.0012,offset:Math.random()*Math.PI*2});
+        });
+        if(!this._cosmicMiscMats)this._cosmicMiscMats=[];
+        this._cosmicMiscMats.push(starMat);
+        this.cosmicGroup.add(exoGroup);
+        this.exoGroup=exoGroup;
+
+        // ── 9. MAGNETAR (ultra-magnetized neutron star) ──
+        // Tiny but insanely bright, with field lines more extreme than NS
+        const mgPos=new THREE.Vector3(-180,55,-60);
+        const mgGroup=new THREE.Group();mgGroup.position.copy(mgPos);
+        this.mgMat=new THREE.ShaderMaterial({
+            uniforms:{uTime:{value:0}},
+            vertexShader:`varying vec3 vN,vVP;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.);vVP=-mv.xyz;gl_Position=projectionMatrix*mv;}`,
+            fragmentShader:`uniform float uTime;varying vec3 vN,vVP;
+                void main(){float p=.7+.3*sin(uTime*50.);// ultra rapid spin 50Hz
+                float rim=pow(clamp(1.-dot(normalize(vVP),vN),0.,1.),1.8)*.9;
+                float diff=max(dot(vN,normalize(vec3(1.,.5,.5))),0.);
+                gl_FragColor=vec4(vec3((diff*.7+.3+rim)*p),1.);}`,
+        });
+        mgGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1.8,20,20),this.mgMat));
+        // More extreme field lines — 12 of them in complex pattern
+        for(let i=0;i<12;i++){
+            const a=(i/12)*Math.PI*2;
+            const fPts=[];
+            for(let j=0;j<=25;j++){
+                const t2=j/25,ang=t2*Math.PI;
+                const r2=2.2+Math.sin(ang)*18*(1+Math.sin(a)*.3);
+                fPts.push(new THREE.Vector3(Math.cos(a)*r2*Math.sin(ang),r2*Math.cos(ang)*2,Math.sin(a)*r2*Math.sin(ang)));
+            }
+            mgGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(fPts),
+                new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.07,blending:THREE.AdditiveBlending,depthWrite:false})));
+        }
+        mgGroup.userData.rotSpd=0.08; // extremely fast
+        this.cosmicGroup.add(mgGroup);
+        this.mgGroup=mgGroup;
+
+        // ── 10. COSMIC STRING (theoretical 1D defect in spacetime) ──
+        // Ultra thin glowing filament crossing the scene
+        const csPoints=[];
+        for(let i=0;i<=60;i++){
+            const t2=i/60,noise=(Math.sin(t2*12)+Math.cos(t2*7))*.8;
+            csPoints.push(new THREE.Vector3(-300+t2*600,noise+Math.sin(t2*5)*3,Math.cos(t2*8)*8));
+        }
+        const csGeo=new THREE.BufferGeometry().setFromPoints(csPoints);
+        const tArr=new Float32Array(61);csPoints.forEach((_,i)=>tArr[i]=i/60);
+        csGeo.setAttribute('aT',new THREE.BufferAttribute(tArr,1));
+        this.csMat=new THREE.ShaderMaterial({
+            uniforms:{uTime:{value:0}},
+            vertexShader:`attribute float aT;uniform float uTime;varying float vT;
+                void main(){vT=aT;
+                vec3 p=position;p.y+=sin(uTime*.08+aT*20.)*.25;// subtle vibration
+                gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+            fragmentShader:`uniform float uTime;varying float vT;
+                void main(){float wave=abs(sin(vT*8.-uTime*.5))*.5+.5;
+                float a=.03+wave*.04;gl_FragColor=vec4(vec3(1.),a);}`,
+            transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
+        });
+        this.scene.add(new THREE.Line(csGeo,this.csMat));
+
         // ── 5. WORMHOLE (Einstein-Rosen bridge) ──
         const whPos=new THREE.Vector3(-200,15,220);
         const whGroup=new THREE.Group();whGroup.position.copy(whPos);
@@ -366,6 +527,77 @@ export default class World {
         whGroup.add(new THREE.Mesh(new THREE.SphereGeometry(4.5,16,16),new THREE.MeshBasicMaterial({color:0x000000,depthWrite:true})));
         this.cosmicGroup.add(whGroup);
         this.whGroup=whGroup;
+    }
+
+    /* ── MEMORY CORE (Dream Archive) ────────────────
+     * A cracked icosahedron that pulses in the dark.
+     * Hover → triggers intimate dream text.
+     ─────────────────────────────────────────────── */
+    _memoryCore() {
+        const pos = new THREE.Vector3(-30, 15, -35); // near center, slightly off
+        this.memoryCoreGroup = new THREE.Group();
+        this.memoryCoreGroup.position.copy(pos);
+
+        // Fractured shell — icosahedron wireframe
+        const geo = new THREE.IcosahedronGeometry(4.5, 1);
+        this.mcMat = new THREE.ShaderMaterial({
+            uniforms: { uTime:{value:0}, uHover:{value:0} },
+            vertexShader: `
+                uniform float uTime, uHover;
+                varying vec3 vPos;
+                void main(){
+                    vPos = position;
+                    // Subtle breathing
+                    float breath = 1.0 + sin(uTime*0.8)*0.04 + uHover*0.08;
+                    gl_Position = projectionMatrix*modelViewMatrix*vec4(position*breath,1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime, uHover;
+                varying vec3 vPos;
+                void main(){
+                    float pulse = 0.5 + 0.5*sin(uTime*1.2);
+                    float base = 0.06 + pulse*0.04 + uHover*0.35;
+                    // Crack effect — dark gaps
+                    float crack = abs(sin(vPos.x*8.0)*sin(vPos.y*8.0)*sin(vPos.z*8.0));
+                    base *= smoothstep(0.0, 0.3, crack);
+                    gl_FragColor = vec4(vec3(base), base*1.4);
+                }
+            `,
+            transparent:true, blending:THREE.AdditiveBlending,
+            depthWrite:false, wireframe:true,
+        });
+        const shell = new THREE.Mesh(geo, this.mcMat);
+        this.memoryCoreGroup.add(shell);
+
+        // Inner glow point
+        const innerMat = new THREE.ShaderMaterial({
+            uniforms:{ uTime:{value:0} },
+            vertexShader:`varying vec3 vN,vVP;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.);vVP=-mv.xyz;gl_Position=projectionMatrix*mv;}`,
+            fragmentShader:`uniform float uTime;varying vec3 vN,vVP;void main(){float f=pow(clamp(1.-dot(normalize(vVP),vN),0.,1.),3.);float p=0.5+0.5*sin(uTime*0.9);gl_FragColor=vec4(vec3(f*p*.5),f*p*.4);}`,
+            transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.FrontSide
+        });
+        this.memoryCoreGroup.add(new THREE.Mesh(new THREE.SphereGeometry(2.5,16,16),innerMat));
+        this.mcInnerMat = innerMat;
+
+        // Floating fragments — tiny icosahedra orbiting
+        this.mcFragments = [];
+        for(let i=0;i<6;i++){
+            const fgeo = new THREE.IcosahedronGeometry(0.3+Math.random()*0.25,0);
+            const fmat = new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:0.08+Math.random()*0.06});
+            const fm = new THREE.Mesh(fgeo,fmat);
+            const angle = (i/6)*Math.PI*2;
+            fm.position.set(Math.cos(angle)*7,Math.sin(angle*0.7)*2.5,Math.sin(angle)*7);
+            fm.userData = { angle, speed: 0.004+Math.random()*0.004, radius:6+Math.random()*2 };
+            this.memoryCoreGroup.add(fm);
+            this.mcFragments.push(fm);
+        }
+
+        // Raycaster object tag
+        this.memoryCoreGroup.userData.isMemoryCore = true;
+        this.scene.add(this.memoryCoreGroup);
+        this._mcHoverTime = 0;
+        this._mcDreamShown = false;
     }
 
     _ringLine(parent,r,rx,ry,op){
@@ -442,6 +674,22 @@ export default class World {
         this.comets.push({line,d,pos:s.clone(),spd:1.1+Math.random()*1.1,life:0,maxLife:3.5+Math.random()*2,mat});
     }
 
+    _setupBHClick(){
+        // Desktop click on black hole area
+        window.addEventListener('click', () => {
+            if(!this.bhGroup || this.experience.isModalOpen) return;
+            const ray = this.experience.raycaster?.instance;
+            const cam = this.experience.camera?.instance;
+            if(!ray || !cam) return;
+            const mouse = this.experience.raycaster?.mouse;
+            if(!mouse) return;
+            ray.setFromCamera(mouse, cam);
+            // Test against bhGroup children
+            const hits = ray.intersectObjects([this.bhGroup], true);
+            if(hits.length > 0) window.dispatchEvent(new Event('bhClick'));
+        });
+    }
+
     _touchSetup(){
         if(!this.M)return;
         window.addEventListener('touchend',e=>{
@@ -461,6 +709,25 @@ export default class World {
         const t=this.experience.time.elapsed;
         const delta=this.experience.time.delta/1000;
         this.background.update();
+        // if (this.neuralNetwork) this.neuralNetwork.update();
+
+        // Time-aware brightness tweak (applied once)
+        if(!this._timeApplied && window._timeMode){
+            this._timeApplied=true;
+            const mode=window._timeMode;
+            // Adjust star twinkle speed and core light based on time
+            if(mode==='night'){
+                // Sharper, brighter stars, lower ambient
+                this.coreLight.intensity=3.0;
+                document.body.classList.add('time-night');
+            } else if(mode==='day'){
+                this.coreLight.intensity=5.5;
+                document.body.classList.add('time-day');
+            } else {
+                this.coreLight.intensity=4.2;
+                document.body.classList.add('time-twilight');
+            }
+        }
         this.coreLight.intensity=3.3+Math.sin(t*1.25)*.9;
         if(this.webMat)this.webMat.uniforms.uTime.value=t;
         if(this._bMats)this._bMats.forEach(m=>m.uniforms.uTime.value=t);
@@ -471,6 +738,21 @@ export default class World {
         if(this.nsGroup)this.nsGroup.rotation.y=t*this.nsGroup.userData.rotSpd;
         if(this.qMat)this.qMat.uniforms.uTime.value=t;
         if(this.dsGroup)this.dsGroup.rotation.y=t*this.dsGroup.userData.rotSpd;
+        // New cosmic object updates
+        if(this._nebMats) this._nebMats.forEach(m=>m.uniforms.uTime.value=t);
+        if(this.nebGroup) this.nebGroup.rotation.y=t*.01;
+        if(this.dmMat)  this.dmMat.uniforms.uTime.value=t;
+        if(this.dmGroup) this.dmGroup.rotation.y=t*this.dmGroup.userData.rotSpd;
+        if(this._exoPlanets) this._exoPlanets.forEach(p=>{
+            const a=t*p.spd+p.offset;
+            p.mesh.position.x=Math.cos(a)*p.orb;
+            p.mesh.position.z=Math.sin(a)*p.orb;
+            p.mesh.rotation.y+=.02;
+        });
+        if(this._cosmicMiscMats) this._cosmicMiscMats.forEach(m=>{if(m.uniforms?.uTime)m.uniforms.uTime.value=t;});
+        if(this.mgMat)  this.mgMat.uniforms.uTime.value=t;
+        if(this.mgGroup) this.mgGroup.rotation.y=t*this.mgGroup.userData.rotSpd;
+        if(this.csMat)  this.csMat.uniforms.uTime.value=t;
         if(this.whMat)this.whMat.uniforms.uTime.value=t;
 
         // Supernova expansion
@@ -489,9 +771,42 @@ export default class World {
         this._sm.y+=(this._tm.y-this._sm.y)*.05;
 
         const hovering=this.experience.raycaster?.currentIntersect;
+        const glitching = this.nodeGroup.userData._glitchSpeedUp;
         if(!this.isPaused&&!hovering){
-            this.nodeGroup.rotation.y+=.00042;
-            this.nodeGroup.rotation.x+=.000062;
+            this.nodeGroup.rotation.y += glitching ? .008 : .00042;
+            this.nodeGroup.rotation.x += glitching ? .003 : .000062;
+        }
+
+        // Memory core update
+        if(this.memoryCoreGroup && this.mcMat) {
+            this.mcMat.uniforms.uTime.value = t;
+            this.mcInnerMat.uniforms.uTime.value = t;
+            this.memoryCoreGroup.rotation.y = t * 0.08;
+            this.memoryCoreGroup.rotation.x = Math.sin(t*0.12)*0.15;
+            // Fragment orbits
+            this.mcFragments.forEach(f=>{
+                f.userData.angle += f.userData.speed;
+                f.position.x = Math.cos(f.userData.angle)*f.userData.radius;
+                f.position.z = Math.sin(f.userData.angle)*f.userData.radius;
+                f.rotation.y += 0.02;
+            });
+            // Check hover via raycaster
+            const ray = this.experience.raycaster;
+            if(ray && !this.experience.isModalOpen){
+                const hits = ray.instance?.intersectObjects([this.memoryCoreGroup],true) || [];
+                if(hits.length > 0){
+                    this.mcMat.uniforms.uHover.value = Math.min(this.mcMat.uniforms.uHover.value+0.04,1);
+                    this._mcHoverTime += delta;
+                    if(this._mcHoverTime > 1.8 && !this._mcDreamShown){
+                        this._mcDreamShown = true;
+                        window.experience?.showDream(Math.floor(Math.random()*7));
+                    }
+                } else {
+                    this.mcMat.uniforms.uHover.value = Math.max(this.mcMat.uniforms.uHover.value-0.03,0);
+                    this._mcHoverTime = 0;
+                    this._mcDreamShown = false;
+                }
+            }
         }
 
         this.traffic.forEach(it=>{

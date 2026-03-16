@@ -222,6 +222,7 @@ export default class Node {
         if(this.experience.audio) this.experience.audio.play('hover');
         this.label.element.style.opacity='1'; this.label.element.style.transform='translateY(0)';
         this.scramble.hover();
+
         gsap.to(this.planetMesh.scale,{x:1.14,y:1.14,z:1.14,duration:.5,ease:'back.out(1.7)'});
         gsap.to(this.atmMesh.scale,{x:1.2,y:1.2,z:1.2,duration:.5});
         gsap.to(this.haloMesh.scale,{x:1.35,y:1.35,z:1.35,duration:.6});
@@ -234,6 +235,7 @@ export default class Node {
     onMouseLeave(){
         if(!this.isHovered)return; this.isHovered=false;
         this.label.element.style.opacity='0'; this.label.element.style.transform='translateY(6px)';
+
         gsap.to(this.planetMesh.scale,{x:1,y:1,z:1,duration:.5});
         gsap.to(this.atmMesh.scale,{x:1,y:1,z:1,duration:.5});
         gsap.to(this.haloMesh.scale,{x:1,y:1,z:1,duration:.5});
