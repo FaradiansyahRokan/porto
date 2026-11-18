@@ -85,21 +85,29 @@ export default class World {
         all.forEach((data, i) => {
             let pos;
             if (i === 0) {
-                // Origin Node sits at the heart of the constellation
-                pos = new THREE.Vector3(0, 0, 0);
+                // Origin Singularity sits at the nexus of the Spacetime Well
+                pos = new THREE.Vector3(0, 2, 0);
             } else {
+                // Golden Spiral Sanctuary arrangement around the Singularity
                 const idx = i - 1;
                 const total = orbitNodes.length;
-                const phi = Math.acos(-1 + (2 * idx + 1) / total);
-                const theta = Math.sqrt(total * Math.PI) * phi;
-                const r = this.M ? 34 : 44;
-                pos = new THREE.Vector3().setFromSphericalCoords(r, phi, theta);
+                const goldenAngle = idx * 2.39996; // ~137.5 deg in radians
+                const radius = (this.M ? 22 : 28) + (idx / Math.max(1, total - 1)) * (this.M ? 22 : 30);
+                const y = Math.sin(idx * 1.15) * 11 + ((idx % 2 === 0) ? 3 : -3);
+                pos = new THREE.Vector3(
+                    Math.cos(goldenAngle) * radius,
+                    y,
+                    Math.sin(goldenAngle) * radius
+                );
             }
             const node = new Node(data, pos, i);
             node.originalPos = pos.clone();
             this.nodes.push(node);
             this.nodeGroup.add(node.group);
         });
+
+        this._cursorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 18);
+        this._cursorWorld = new THREE.Vector3(0, 999, 0);
     }
 
     filterByCategory(cat) {
@@ -743,8 +751,8 @@ export default class World {
         this._dragVel    = { x: 0, y: 0 };
 
         const onDown = (x, y, target) => {
-            if (this.experience.isModalOpen || !this.experience._started) return;
-            if (target && target.closest && target.closest('header, .hud-dock, .quick-drawer, .overlay, .project-label, button, a')) return;
+            if (!this.experience._started) return;
+            if (target && target.closest && target.closest('header, .hud-dock, .quick-drawer, .modal-card, .project-label, button, a')) return;
             this._isDragging = true;
             this._dragMoved  = false;
             this._lastPtr.x  = x;
@@ -752,12 +760,26 @@ export default class World {
         };
 
         const onMove = (x, y) => {
-            if (!this._isDragging || this.experience.isModalOpen) return;
+            if (!this._isDragging) return;
             const dx = x - this._lastPtr.x;
             const dy = y - this._lastPtr.y;
             if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this._dragMoved = true;
             this._lastPtr.x = x;
             this._lastPtr.y = y;
+
+            // When inspecting a relic up close, dragging spins that 3D relic directly!
+            if (this.experience.isModalOpen) {
+                const focused = this.nodes[this.experience.activeNodeIndex];
+                if (focused) {
+                    focused.planetMesh.rotation.y += dx * 0.012;
+                    focused.planetMesh.rotation.x += dy * 0.012;
+                    if (focused.cageMesh) {
+                        focused.cageMesh.rotation.y -= dx * 0.01;
+                        focused.cageMesh.rotation.x += dy * 0.01;
+                    }
+                }
+                return;
+            }
 
             this._dragVel.y = dx * 0.0045;
             this._dragVel.x = dy * 0.0035;
@@ -799,7 +821,13 @@ export default class World {
     update(){
         const t=this.experience.time.elapsed;
         const delta=this.experience.time.delta/1000;
-        this.background.update();
+
+        // Project cursor onto the 3D spacetime plane so the gravity grid warps under mouse
+        const ray = this.experience.raycaster?.instance;
+        if (ray && this._cursorPlane && this._cursorWorld) {
+            ray.ray.intersectPlane(this._cursorPlane, this._cursorWorld);
+        }
+        this.background.update(this._cursorWorld);
         // if (this.neuralNetwork) this.neuralNetwork.update();
 
         // Time-aware brightness tweak (applied once)

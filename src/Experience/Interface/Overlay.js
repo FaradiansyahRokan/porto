@@ -32,12 +32,18 @@ export default class Overlay {
 
         // Events
         this.closeBtn?.addEventListener('click', () => this.hide());
+        document.getElementById('exit-orbit-btn')?.addEventListener('click', () => this.hide());
         this.prevBtn?.addEventListener('click', () => this.experience.navigateNode?.(-1, true));
         this.nextBtn?.addEventListener('click', () => this.experience.navigateNode?.(1, true));
 
-        this.overlay?.addEventListener('click', e => {
-            if (e.target === this.overlay) this.hide();
-        });
+        const triggerRelicPulse = () => {
+            this.experience.audio?.play('click');
+            const activeNode = this.experience.world?.nodes?.[this.experience.activeNodeIndex];
+            activeNode?.triggerPulse?.();
+            this.experience.world?.background?.triggerGridPulse?.(1.1);
+        };
+        document.getElementById('blade-pulse-btn')?.addEventListener('click', triggerRelicPulse);
+        document.getElementById('pulse-relic-btn')?.addEventListener('click', triggerRelicPulse);
 
         window.addEventListener('keydown', e => {
             if (!this.experience.isModalOpen) return;
@@ -138,7 +144,13 @@ export default class Overlay {
     show(data) {
         this.experience.isModalOpen = true;
         this.experience.world?.pauseRotation();
-        document.querySelector('.webgl')?.classList.add('blur');
+        document.body.classList.add('is-inspecting');
+        const rvh = document.getElementById('relic-viewport-hud');
+        if (rvh) {
+            rvh.classList.add('visible');
+            rvh.setAttribute('aria-hidden', 'false');
+            rvh.style.setProperty('--modal-accent', data.accent || '#38bdf8');
+        }
 
         const accent = data.accent || '#38bdf8';
         this.overlay?.style.setProperty('--modal-accent', accent);
@@ -369,8 +381,14 @@ export default class Overlay {
         if (!this.experience.isModalOpen) return;
         this.overlay.classList.remove('visible');
         this.experience.isModalOpen = false;
+        document.body.classList.remove('is-inspecting');
+        const rvh = document.getElementById('relic-viewport-hud');
+        if (rvh) {
+            rvh.classList.remove('visible');
+            rvh.setAttribute('aria-hidden', 'true');
+        }
+        this.experience.exitCloseUpOrbit?.();
         this.experience.world?.resumeRotation();
-        document.querySelector('.webgl')?.classList.remove('blur');
         this.experience.audio?.play('outro');
         this._stopParticles?.();
         clearInterval(this._coordsTimer);

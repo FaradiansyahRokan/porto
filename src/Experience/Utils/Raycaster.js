@@ -26,24 +26,17 @@ export default class Raycaster {
     }
 
     onClick(event) {
-        if (!this.experience._started || this.experience.isModalOpen) return;
+        if (!this.experience._started) return;
         if (this.experience.world?._dragMoved) return;
-        if (event?.target?.closest?.('header, .hud-dock, .quick-drawer, .overlay, .project-label, button, a')) return;
+        if (event?.target?.closest?.('header, .hud-filters, .hud-dock, .quick-drawer, .modal-card, .relic-viewport-hud, .project-label, button, a')) return;
 
         if (this.currentIntersect && this.currentIntersect.data) {
-            this.experience.selectNode?.(this.currentIntersect);
+            this.experience.selectNode?.(this.currentIntersect, true);
         }
     }
 
     update() {
-        if (this.experience.isModalOpen || !this.experience._started) {
-            if (this.currentIntersect) {
-                this.currentIntersect.onMouseLeave();
-                if (this.experience.cursor) this.experience.cursor.leave();
-                this.currentIntersect = null;
-            }
-            return;
-        }
+        if (!this.experience._started) return;
 
         this.instance.setFromCamera(this.mouse, this.camera.instance);
         const world = this.experience.world;

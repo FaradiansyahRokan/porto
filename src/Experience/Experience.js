@@ -101,31 +101,57 @@ export default class Experience {
         this.drawerEl   = document.getElementById('quick-drawer');
         this.indexBtn   = document.getElementById('index-btn');
 
-        // Populate Mission Directory Drawer
-        const listEl = document.getElementById('drawer-list');
-        if (listEl && this.world?.nodes) {
-            listEl.innerHTML = '';
+        // Populate Mission Directory Drawer & 13-Node Orbital Compass Ticks
+        const listEl  = document.getElementById('drawer-list');
+        const ticksEl = document.getElementById('compass-ticks');
+        this.compassTickBtns = [];
+
+        if (this.world?.nodes) {
+            if (listEl) listEl.innerHTML = '';
+            if (ticksEl) ticksEl.innerHTML = '';
+
             this.world.nodes.forEach((node, idx) => {
                 const d = node.data;
-                const card = document.createElement('button');
-                card.type = 'button';
-                card.className = 'drawer-item';
-                card.style.setProperty('--item-accent', d.accent || '#38bdf8');
-                const tags = (d.tags || []).slice(0, 3).map(t => `<span class="drawer-tag">${t}</span>`).join('');
-                card.innerHTML = `
-                    <div class="drawer-item-top">
-                        <span class="drawer-item-code">${d.code || `NODE-${idx}`} · ${d.kicker || 'System'}</span>
-                        <span class="drawer-item-status">${d.status || 'ACTIVE'}</span>
-                    </div>
-                    <div class="drawer-item-title">${d.title}</div>
-                    <div class="drawer-item-desc">${(d.desc || '').slice(0, 110)}...</div>
-                    ${tags ? `<div class="drawer-item-tags">${tags}</div>` : ''}
-                `;
-                card.addEventListener('click', () => {
-                    this.toggleDrawer(false);
-                    this.selectNode(node, true);
-                });
-                listEl.appendChild(card);
+                const numStr = String(idx).padStart(2, '0');
+
+                if (listEl) {
+                    const card = document.createElement('button');
+                    card.type = 'button';
+                    card.className = 'drawer-item';
+                    card.style.setProperty('--item-accent', d.accent || '#38bdf8');
+                    const tags = (d.tags || []).slice(0, 3).map(t => `<span class="drawer-tag">${t}</span>`).join('');
+                    card.innerHTML = `
+                        <div class="drawer-item-top">
+                            <span class="drawer-item-code">${numStr} // ${d.code || `NODE-${idx}`} · ${d.kicker || 'Relic'}</span>
+                            <span class="drawer-item-status">${d.status || 'ACTIVE'}</span>
+                        </div>
+                        <div class="drawer-item-title">${d.title}</div>
+                        <div class="drawer-item-desc">${(d.desc || '').slice(0, 110)}...</div>
+                        ${tags ? `<div class="drawer-item-tags">${tags}</div>` : ''}
+                    `;
+                    card.addEventListener('click', () => {
+                        this.toggleDrawer(false);
+                        this.selectNode(node, true);
+                    });
+                    listEl.appendChild(card);
+                }
+
+                if (ticksEl) {
+                    const tick = document.createElement('button');
+                    tick.type = 'button';
+                    tick.className = 'compass-tick' + (idx === 0 ? ' active' : '');
+                    tick.style.setProperty('--tick-accent', d.accent || '#38bdf8');
+                    tick.title = `${numStr} // ${d.title}`;
+                    tick.innerHTML = `
+                        <span class="ct-bar"></span>
+                        <span class="ct-num">${numStr}</span>
+                    `;
+                    tick.addEventListener('click', () => {
+                        this.selectNode(node, this.isModalOpen);
+                    });
+                    ticksEl.appendChild(tick);
+                    this.compassTickBtns.push(tick);
+                }
             });
         }
 
@@ -133,6 +159,15 @@ export default class Experience {
         if (this.world?.nodes?.[0]) {
             this._updateDockReadout(this.world.nodes[0]);
         }
+
+        // 3-Paradigm Reality Switcher
+        const paradigmBtns = document.querySelectorAll('.paradigm-switcher .ps-btn');
+        paradigmBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.dataset.paradigm || 'singularity';
+                this.setParadigm(mode);
+            });
+        });
 
         // Filter pills
         const filterBtns = document.querySelectorAll('#hud-filters .filter-pill');
@@ -144,7 +179,6 @@ export default class Experience {
                 this.audio?.play('click');
                 this.world?.filterByCategory(cat);
 
-                // Focus first matching node in dock readout
                 const firstMatch = this.world?.nodes?.find(n =>
                     cat === 'all' || n.data.category === cat || n.data.type === cat
                 );
@@ -153,8 +187,8 @@ export default class Experience {
         });
 
         // Dock Prev / Next / Open Dossier
-        document.getElementById('prev-node-btn')?.addEventListener('click', () => this.navigateNode(-1, false));
-        document.getElementById('next-node-btn')?.addEventListener('click', () => this.navigateNode(1, false));
+        document.getElementById('prev-node-btn')?.addEventListener('click', () => this.navigateNode(-1, this.isModalOpen));
+        document.getElementById('next-node-btn')?.addEventListener('click', () => this.navigateNode(1, this.isModalOpen));
         this.dockBtn?.addEventListener('click', () => {
             const node = this.world?.nodes?.[this.activeNodeIndex];
             if (node) this.selectNode(node, true);
@@ -168,12 +202,12 @@ export default class Experience {
         document.getElementById('reset-cam-btn')?.addEventListener('click', () => {
             this.audio?.play('click');
             this._scrollTarget = 0;
+            if (this.isModalOpen) this.overlay?.hide();
+            else this.camera?.returnToOverview();
             if (this.world?.nodeGroup) {
                 gsap.to(this.world.nodeGroup.rotation, { x: 0, y: 0, z: 0, duration: 1.4, ease: 'expo.out', overwrite: 'auto' });
             }
-            if (this.camera?.instance) {
-                gsap.to(this.camera.instance.position, { x: 0, y: 0, z: this.isMobile ? 120 : 150, duration: 1.4, ease: 'expo.out', overwrite: 'auto' });
-            }
+            this.world?.background?.triggerGridPulse?.(0.9);
         });
 
         // Drawer open/close
@@ -181,9 +215,13 @@ export default class Experience {
         document.getElementById('drawer-close-btn')?.addEventListener('click', () => this.toggleDrawer(false));
         document.getElementById('drawer-backdrop')?.addEventListener('click', () => this.toggleDrawer(false));
 
-        // Keyboard shortcuts when modal is closed
+        // Keyboard shortcuts
         window.addEventListener('keydown', e => {
             if (!this._started) return;
+            if (e.key === '1') { this.setParadigm('singularity'); return; }
+            if (e.key === '2') { this.setParadigm('architect');   return; }
+            if (e.key === '3') { this.setParadigm('apex');        return; }
+
             if (e.key === 'Escape' && this.drawerEl?.classList.contains('open')) {
                 this.toggleDrawer(false);
                 return;
@@ -195,8 +233,58 @@ export default class Experience {
                 this.navigateNode(-1, false);
             } else if (e.key === 'ArrowRight') {
                 this.navigateNode(1, false);
+            } else if (e.key === 'Enter') {
+                const node = this.world?.nodes?.[this.activeNodeIndex];
+                if (node) this.selectNode(node, true);
             }
         });
+    }
+
+    setParadigm(mode) {
+        this.currentParadigm = mode;
+        document.body.dataset.paradigm = mode;
+        this.audio?.play('click');
+
+        document.querySelectorAll('.paradigm-switcher .ps-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.paradigm === mode);
+        });
+
+        const manifestoEl = document.getElementById('compass-manifesto');
+        if (mode === 'singularity') {
+            this.world?.background?.setParadigmPalette('#f59e0b', '#38bdf8');
+            this._showSecretMsg('◈ PARADIGM I // SOLAR SINGULARITY — SPACETIME WELL ENGAGED');
+            if (manifestoEl) manifestoEl.textContent = '"Every system has a center of gravity. Archipelago Dynamics bridges islands to stars."';
+            this.world?.nodes?.forEach(n => {
+                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.32, duration: 0.8 });
+            });
+            if (this.paradigm?._hbEl) {
+                this.paradigm._hbVisible = false;
+                gsap.to(this.paradigm._hbEl, { opacity: 0, duration: 0.8 });
+            }
+        } else if (mode === 'architect') {
+            this.world?.background?.setParadigmPalette('#10b981', '#00f2fe');
+            this._showSecretMsg('◈ PARADIGM II // QUANTUM ARCHITECT — SACRED GEOMETRY BLUEPRINT');
+            if (manifestoEl) manifestoEl.textContent = '"Architecture is frozen music; software is living geometry."';
+            this.world?.nodes?.forEach(n => {
+                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.88, duration: 0.8 });
+            });
+            if (this.paradigm?._hbEl) {
+                this.paradigm._hbVisible = false;
+                gsap.to(this.paradigm._hbEl, { opacity: 0, duration: 0.8 });
+            }
+        } else if (mode === 'apex') {
+            this.world?.background?.setParadigmPalette('#f43f5e', '#a855f7');
+            this._showSecretMsg('◈ PARADIGM III // APEX HUMANITY — ELEVATION OVER DOMINATION');
+            if (manifestoEl) manifestoEl.textContent = '"APEX HUMANITY: Technology must elevate the human spirit, never replace it."';
+            this.world?.nodes?.forEach(n => {
+                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.55, duration: 0.8 });
+                n.triggerPulse?.();
+            });
+            if (this.paradigm?._hbEl) {
+                this.paradigm._hbVisible = true;
+                gsap.to(this.paradigm._hbEl, { opacity: 0.85, duration: 1.2 });
+            }
+        }
     }
 
     toggleDrawer(forceState) {
@@ -211,9 +299,15 @@ export default class Experience {
     _updateDockReadout(node) {
         if (!node?.data) return;
         const d = node.data;
-        if (this.dockKicker) this.dockKicker.textContent = `${d.code || 'NODE'} · ${(d.kicker || 'SYSTEM').toUpperCase()}`;
-        if (this.dockTitle)  this.dockTitle.textContent  = `${d.title} — Open Dossier ↗`;
+        const idx = this.world?.nodes?.indexOf(node) ?? 0;
+        const numStr = String(idx).padStart(2, '0');
+        if (this.dockKicker) this.dockKicker.textContent = `${numStr} // ${d.code || 'NODE'} · ${(d.kicker || 'RELIC').toUpperCase()}`;
+        if (this.dockTitle)  this.dockTitle.textContent  = `${d.title} — Engage Close-Up Orbit ↗`;
         this.dockBtn?.style.setProperty('--dock-accent', d.accent || '#38bdf8');
+
+        this.compassTickBtns?.forEach((btn, i) => {
+            btn.classList.toggle('active', i === idx);
+        });
     }
 
     selectNode(node, openModal = true) {
@@ -223,25 +317,34 @@ export default class Experience {
 
         this.audio?.play('click');
         this._updateDockReadout(node);
+        this.world?.background?.triggerGridPulse?.(0.75);
 
-        // Rotate constellation so selected node faces toward the camera
-        const pos = node.originalPos;
-        if (pos && pos.lengthSq() > 1 && this.world?.nodeGroup) {
-            const targetRotY = -Math.atan2(pos.x, pos.z);
-            const horizDist  = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
-            const targetRotX = Math.max(-0.55, Math.min(0.55, Math.atan2(pos.y, horizDist) * 0.65));
-            gsap.to(this.world.nodeGroup.rotation, {
-                x: targetRotX,
-                y: targetRotY,
-                duration: 1.25,
-                ease: 'expo.out',
-                overwrite: 'auto'
-            });
-        }
+        this.world.nodes.forEach(n => n.setFocused(n === node && openModal));
 
         if (openModal) {
+            this.camera?.flyToNode(node);
             this.overlay?.show(node.data);
+        } else {
+            // Rotate constellation so selected node faces toward the camera in overview
+            const pos = node.originalPos;
+            if (pos && pos.lengthSq() > 1 && this.world?.nodeGroup) {
+                const targetRotY = -Math.atan2(pos.x, pos.z);
+                const horizDist  = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+                const targetRotX = Math.max(-0.45, Math.min(0.45, Math.atan2(pos.y, horizDist) * 0.5));
+                gsap.to(this.world.nodeGroup.rotation, {
+                    x: targetRotX,
+                    y: targetRotY,
+                    duration: 1.25,
+                    ease: 'expo.out',
+                    overwrite: 'auto'
+                });
+            }
         }
+    }
+
+    exitCloseUpOrbit() {
+        this.world?.nodes?.forEach(n => n.setFocused(false));
+        this.camera?.returnToOverview();
     }
 
     navigateNode(dir = 1, openModal = false) {
@@ -937,37 +1040,28 @@ export default class Experience {
         this._setupRealityCollapse();
         this._setupDreamArchive();
 
-        // Reveal HUD Header & Bottom Orbital Dock
+        // Reveal HUD Header, Filters & Bottom Orbital Compass
         setTimeout(() => {
             document.getElementById('hud-header')?.classList.add('visible');
+            document.getElementById('hud-filters')?.classList.add('visible');
             document.getElementById('hud-dock')?.classList.add('visible');
             if (this.hudEl?.wrap) this.hudEl.wrap.classList.add('visible');
-        }, 1200);
-
-        setTimeout(() => {
-            const hint = document.getElementById('hint-text');
-            if (hint) { hint.style.display = 'block'; gsap.to(hint, { opacity: .65, duration: 1.8 }); }
-        }, 2800);
-
-        setTimeout(() => {
-            const sh = document.getElementById('scroll-hint');
-            if (sh) { sh.style.display = 'flex'; requestAnimationFrame(() => sh.classList.add('visible')); }
-        }, 3600);
+        }, 1000);
 
         const cam = this.camera.instance;
         const rig = this.camera.rig;
-        const zStart = this.timeMode === 'night' ? 3500 : this.timeMode === 'twilight' ? 2800 : 2200;
+        const zStart = this.timeMode === 'night' ? 3200 : this.timeMode === 'twilight' ? 2600 : 2100;
 
-        gsap.set(cam.position, { z: zStart });
-        gsap.set(cam, { fov: 115 });
+        gsap.set(cam.position, { x: 0, y: 80, z: zStart });
+        gsap.set(cam, { fov: 110 });
         cam.updateProjectionMatrix();
 
         gsap.timeline({ delay: 0.15 })
-            .to(cam.position, { z: this.isMobile ? 120 : 150, duration: 4.5, ease: 'expo.out' })
-            .to(cam, { fov: 50, duration: 2.8, ease: 'power4.out',
+            .to(cam.position, { x: 0, y: 14, z: this.isMobile ? 108 : 118, duration: 4.2, ease: 'expo.out' })
+            .to(cam, { fov: 48, duration: 2.6, ease: 'power4.out',
                 onUpdate: () => cam.updateProjectionMatrix() }, '<0.2')
-            .from(rig.rotation, { y: -Math.PI * 2, duration: 5.0, ease: 'power2.out' }, '<')
-            .from(rig.rotation, { z: 0.5, duration: 3.2, ease: 'power3.out' }, '<0.4');
+            .from(rig.rotation, { y: -Math.PI * 1.5, duration: 4.5, ease: 'power2.out' }, '<')
+            .from(rig.rotation, { z: 0.35, duration: 3.0, ease: 'power3.out' }, '<0.3');
     }
 
         resize() {
@@ -994,11 +1088,11 @@ export default class Experience {
             this._checkRealityCollapse?.(delta2);
         }
 
-        if (this.hudEl?.wrap?.classList.contains('visible') && this.camera) {
+        if (this.camera && this.hudEl) {
             const p = this.camera.instance.position;
-            if (this.hudEl.x) this.hudEl.x.textContent = `X: ${p.x.toFixed(2)}`;
-            if (this.hudEl.y) this.hudEl.y.textContent = `Y: ${p.y.toFixed(2)}`;
-            if (this.hudEl.z) this.hudEl.z.textContent = `Z: ${p.z.toFixed(2)}`;
+            if (this.hudEl.x) this.hudEl.x.textContent = `X:${p.x.toFixed(1)}`;
+            if (this.hudEl.y) this.hudEl.y.textContent = `Y:${p.y.toFixed(1)}`;
+            if (this.hudEl.z) this.hudEl.z.textContent = `Z:${p.z.toFixed(1)}`;
         }
 
         if (this._started && this._waypoints) {
