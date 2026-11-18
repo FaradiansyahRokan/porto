@@ -19,8 +19,8 @@ export default class Background {
         this.pulsarMats  = [];
         this.citadelRings = [];
 
-        this.primaryColor   = new THREE.Color('#f59e0b');
-        this.secondaryColor = new THREE.Color('#38bdf8');
+        this.primaryColor   = new THREE.Color('#e2c799');
+        this.secondaryColor = new THREE.Color('#94a3b8');
 
         this._buildSpacetimeGrid();
         this._buildCitadelMegastructure();
@@ -48,8 +48,8 @@ export default class Background {
                 uTime:        { value: 0 },
                 uCursorWorld: { value: new THREE.Vector3(0, 999, 0) },
                 uPulse:       { value: 0 },
-                uColorA:      { value: new THREE.Color('#f59e0b') },
-                uColorB:      { value: new THREE.Color('#38bdf8') }
+                uColorA:      { value: new THREE.Color('#e2c799') },
+                uColorB:      { value: new THREE.Color('#94a3b8') }
             },
             vertexShader: `
                 uniform float uTime, uPulse;
@@ -222,8 +222,8 @@ export default class Background {
                     uPR:     { value: this.PR },
                     uA:      { value: c.a },
                     uSp:     { value: c.sp },
-                    uColorA: { value: new THREE.Color('#f59e0b') },
-                    uColorB: { value: new THREE.Color('#38bdf8') }
+                    uColorA: { value: new THREE.Color('#e2c799') },
+                    uColorB: { value: new THREE.Color('#94a3b8') }
                 },
                 vertexShader: `
                     attribute float aSize, aPhase;
@@ -280,8 +280,8 @@ export default class Background {
             uniforms: {
                 uTime:   { value: 0 },
                 uPR:     { value: this.PR },
-                uColorA: { value: new THREE.Color('#f59e0b') },
-                uColorB: { value: new THREE.Color('#38bdf8') }
+                uColorA: { value: new THREE.Color('#e2c799') },
+                uColorB: { value: new THREE.Color('#94a3b8') }
             },
             vertexShader: `
                 attribute float aRand;

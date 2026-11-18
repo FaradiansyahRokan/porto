@@ -60,11 +60,11 @@ export default class Experience {
             if (bar) bar.style.width = '100%';
             if (pct) pct.textContent = '100%';
             if (status) status.textContent = this.visitCount > 1
-                ? `Welcome back, Commander. Visit #${this.visitCount}.`
-                : 'Telemetry locked · Universe ready.';
+                ? `Welcome back · Visit #${this.visitCount}`
+                : 'Ready';
             setTimeout(() => {
                 if (!btn) return;
-                btn.textContent = '// INITIALIZE MISSION CONTROL //';
+                btn.textContent = 'Enter Space';
                 btn.classList.add('active');
                 btn.disabled = false;
                 btn.addEventListener('click', () => this.startExperience());
@@ -251,38 +251,38 @@ export default class Experience {
 
         const manifestoEl = document.getElementById('compass-manifesto');
         if (mode === 'singularity') {
-            this.world?.background?.setParadigmPalette('#f59e0b', '#38bdf8');
-            this._showSecretMsg('◈ PARADIGM I // SOLAR SINGULARITY — SPACETIME WELL ENGAGED');
-            if (manifestoEl) manifestoEl.textContent = '"Every system has a center of gravity. Archipelago Dynamics bridges islands to stars."';
+            this.world?.background?.setParadigmPalette('#e2c799', '#94a3b8');
+            this._showSecretMsg('Obsidian · Titanium');
+            if (manifestoEl) manifestoEl.textContent = '';
             this.world?.nodes?.forEach(n => {
-                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.32, duration: 0.8 });
+                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.26, duration: 0.8 });
             });
             if (this.paradigm?._hbEl) {
                 this.paradigm._hbVisible = false;
                 gsap.to(this.paradigm._hbEl, { opacity: 0, duration: 0.8 });
             }
         } else if (mode === 'architect') {
-            this.world?.background?.setParadigmPalette('#10b981', '#00f2fe');
-            this._showSecretMsg('◈ PARADIGM II // QUANTUM ARCHITECT — SACRED GEOMETRY BLUEPRINT');
-            if (manifestoEl) manifestoEl.textContent = '"Architecture is frozen music; software is living geometry."';
+            this.world?.background?.setParadigmPalette('#cbd5e1', '#64748b');
+            this._showSecretMsg('Slate · Architecture');
+            if (manifestoEl) manifestoEl.textContent = '';
             this.world?.nodes?.forEach(n => {
-                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.88, duration: 0.8 });
+                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.72, duration: 0.8 });
             });
             if (this.paradigm?._hbEl) {
                 this.paradigm._hbVisible = false;
                 gsap.to(this.paradigm._hbEl, { opacity: 0, duration: 0.8 });
             }
         } else if (mode === 'apex') {
-            this.world?.background?.setParadigmPalette('#f43f5e', '#a855f7');
-            this._showSecretMsg('◈ PARADIGM III // APEX HUMANITY — ELEVATION OVER DOMINATION');
-            if (manifestoEl) manifestoEl.textContent = '"APEX HUMANITY: Technology must elevate the human spirit, never replace it."';
+            this.world?.background?.setParadigmPalette('#e6ccb2', '#b08968');
+            this._showSecretMsg('Warmth · Apex Humanity');
+            if (manifestoEl) manifestoEl.textContent = '';
             this.world?.nodes?.forEach(n => {
-                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.55, duration: 0.8 });
+                if (n.cageMat && !n.isDimmed) gsap.to(n.cageMat, { opacity: 0.45, duration: 0.8 });
                 n.triggerPulse?.();
             });
             if (this.paradigm?._hbEl) {
                 this.paradigm._hbVisible = true;
-                gsap.to(this.paradigm._hbEl, { opacity: 0.85, duration: 1.2 });
+                gsap.to(this.paradigm._hbEl, { opacity: 0.55, duration: 1.2 });
             }
         }
     }
@@ -301,9 +301,9 @@ export default class Experience {
         const d = node.data;
         const idx = this.world?.nodes?.indexOf(node) ?? 0;
         const numStr = String(idx).padStart(2, '0');
-        if (this.dockKicker) this.dockKicker.textContent = `${numStr} // ${d.code || 'NODE'} · ${(d.kicker || 'RELIC').toUpperCase()}`;
-        if (this.dockTitle)  this.dockTitle.textContent  = `${d.title} — Engage Close-Up Orbit ↗`;
-        this.dockBtn?.style.setProperty('--dock-accent', d.accent || '#38bdf8');
+        if (this.dockKicker) this.dockKicker.textContent = `${numStr} · ${d.kicker || 'Project'}`;
+        if (this.dockTitle)  this.dockTitle.textContent  = d.title;
+        this.dockBtn?.style.setProperty('--dock-accent', d.accent || '#e2c799');
 
         this.compassTickBtns?.forEach((btn, i) => {
             btn.classList.toggle('active', i === idx);
