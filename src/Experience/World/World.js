@@ -20,6 +20,8 @@ export default class World {
 
         this.nodeGroup = new THREE.Group();
         this.scene.add(this.nodeGroup);
+        this.scene.fog = new THREE.FogExp2(0x050507, 0.0019);
+        this.activeCategory = null;
 
         this._lights();
         this.background = new Background();
@@ -111,12 +113,12 @@ export default class World {
     }
 
     filterByCategory(cat) {
-        this.activeCategory = cat;
+        this.activeCategory = (!cat || cat === 'all') ? null : cat;
         this.nodes.forEach(node => {
-            if (!cat || cat === 'all') {
+            if (!this.activeCategory) {
                 node.setDimmed(false);
             } else {
-                const match = node.data.category === cat || node.data.type === cat;
+                const match = node.data.category === this.activeCategory || node.data.type === this.activeCategory;
                 node.setDimmed(!match);
             }
         });

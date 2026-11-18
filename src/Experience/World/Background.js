@@ -108,7 +108,7 @@ export default class Background {
                     vec3 col = mix(uColorB, uColorA, clamp(vWell * 1.4 + vCursorLift * 0.8, 0.0, 1.0));
                     col = mix(col, vec3(1.0), vCursorLift * 0.55);
 
-                    float alpha = combined * edgeFade * (0.14 + vWell * 0.42 + vCursorLift * 0.55);
+                    float alpha = combined * edgeFade * (0.09 + vWell * 0.28 + vCursorLift * 0.42);
                     if (alpha < 0.008) discard;
 
                     gl_FragColor = vec4(col, alpha);
@@ -129,10 +129,10 @@ export default class Background {
         this.scene.add(this.citadelGroup);
 
         const configs = [
-            { r: 58,  tube: 0.12, segs: 180, rx: Math.PI * 0.42, rz: 0.18,  spd: 0.0018,  col: this.primaryColor,   op: 0.24 },
-            { r: 78,  tube: 0.09, segs: 200, rx: -Math.PI * 0.3, rz: -0.35, spd: -0.0012, col: this.secondaryColor, op: 0.18 },
-            { r: 105, tube: 0.14, segs: 220, rx: Math.PI * 0.15, rz: 0.52,  spd: 0.0008,  col: this.primaryColor,   op: 0.14 },
-            { r: 145, tube: 0.18, segs: 240, rx: Math.PI * 0.5,  rz: 0.05,  spd: -0.0005, col: this.secondaryColor, op: 0.12 }
+            { r: 58,  tube: 0.06, segs: 180, rx: Math.PI * 0.42, rz: 0.18,  spd: 0.0012,  col: this.primaryColor,   op: 0.14 },
+            { r: 78,  tube: 0.05, segs: 200, rx: -Math.PI * 0.3, rz: -0.35, spd: -0.0009, col: this.secondaryColor, op: 0.11 },
+            { r: 105, tube: 0.07, segs: 220, rx: Math.PI * 0.15, rz: 0.52,  spd: 0.0006,  col: this.primaryColor,   op: 0.09 },
+            { r: 145, tube: 0.08, segs: 240, rx: Math.PI * 0.5,  rz: 0.05,  spd: -0.0004, col: this.secondaryColor, op: 0.07 }
         ];
 
         configs.forEach((c, idx) => {
