@@ -41,8 +41,10 @@ export default class Experience {
         this.audio     = new AudioManager();
 
         this.isModalOpen = false;
+        this.activeNodeIndex = 0;
         this._loadSim();
         this._setupHUD();
+        this._setupMissionControl();
         this._setupScrollNarrative();
         this._setupTimeAwareness();
         this._setupGlitchMode();
@@ -50,23 +52,27 @@ export default class Experience {
         this._setupTouchDrag();
 
         this.resources.triggerReady = () => {
+            clearInterval(this._loadSimIv);
             const btn = document.getElementById('start-btn');
             const bar = document.querySelector('.bar-fill');
+            const pct = document.getElementById('loader-pct');
             const status = document.getElementById('loader-status');
             if (bar) bar.style.width = '100%';
+            if (pct) pct.textContent = '100%';
             if (status) status.textContent = this.visitCount > 1
-                ? `Welcome back. Visit #${this.visitCount}.`
-                : 'Universe ready.';
+                ? `Welcome back, Commander. Visit #${this.visitCount}.`
+                : 'Telemetry locked · Universe ready.';
             setTimeout(() => {
-                btn.textContent = '// ENTER THE VOID //';
+                if (!btn) return;
+                btn.textContent = '// INITIALIZE MISSION CONTROL //';
                 btn.classList.add('active');
                 btn.disabled = false;
                 btn.addEventListener('click', () => this.startExperience());
                 if (this.isMobile) {
                     document.getElementById('preloader')
-                        .addEventListener('click', () => { if (btn.classList.contains('active')) this.startExperience(); });
+                        ?.addEventListener('click', () => { if (btn.classList.contains('active')) this.startExperience(); });
                 }
-            }, 400);
+            }, 350);
         };
 
         this.sizes.triggerResize = () => this.resize();
@@ -76,13 +82,174 @@ export default class Experience {
     /* ── LOAD SIMULATION ───────────────────────────── */
     _loadSim() {
         const bar = document.querySelector('.bar-fill');
+        const pct = document.getElementById('loader-pct');
         if (!bar) return;
         let p = 0;
-        const iv = setInterval(() => {
-            p += Math.random() * 6 + 1;
-            if (p > 90) { clearInterval(iv); p = 90; }
+        this._loadSimIv = setInterval(() => {
+            p += Math.random() * 8 + 2;
+            if (p > 92) { clearInterval(this._loadSimIv); p = 92; }
             bar.style.width = p + '%';
-        }, 200);
+            if (pct) pct.textContent = `${Math.round(p)}%`;
+        }, 160);
+    }
+
+    /* ── MISSION CONTROL HUD & DIRECTORY ───────────── */
+    _setupMissionControl() {
+        this.dockKicker = document.getElementById('dock-node-kicker');
+        this.dockTitle  = document.getElementById('dock-node-title');
+        this.dockBtn    = document.getElementById('dock-current-btn');
+        this.drawerEl   = document.getElementById('quick-drawer');
+        this.indexBtn   = document.getElementById('index-btn');
+
+        // Populate Mission Directory Drawer
+        const listEl = document.getElementById('drawer-list');
+        if (listEl && this.world?.nodes) {
+            listEl.innerHTML = '';
+            this.world.nodes.forEach((node, idx) => {
+                const d = node.data;
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'drawer-item';
+                card.style.setProperty('--item-accent', d.accent || '#38bdf8');
+                const tags = (d.tags || []).slice(0, 3).map(t => `<span class="drawer-tag">${t}</span>`).join('');
+                card.innerHTML = `
+                    <div class="drawer-item-top">
+                        <span class="drawer-item-code">${d.code || `NODE-${idx}`} · ${d.kicker || 'System'}</span>
+                        <span class="drawer-item-status">${d.status || 'ACTIVE'}</span>
+                    </div>
+                    <div class="drawer-item-title">${d.title}</div>
+                    <div class="drawer-item-desc">${(d.desc || '').slice(0, 110)}...</div>
+                    ${tags ? `<div class="drawer-item-tags">${tags}</div>` : ''}
+                `;
+                card.addEventListener('click', () => {
+                    this.toggleDrawer(false);
+                    this.selectNode(node, true);
+                });
+                listEl.appendChild(card);
+            });
+        }
+
+        // Sync initial dock node
+        if (this.world?.nodes?.[0]) {
+            this._updateDockReadout(this.world.nodes[0]);
+        }
+
+        // Filter pills
+        const filterBtns = document.querySelectorAll('#hud-filters .filter-pill');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const cat = btn.dataset.filter || 'all';
+                this.audio?.play('click');
+                this.world?.filterByCategory(cat);
+
+                // Focus first matching node in dock readout
+                const firstMatch = this.world?.nodes?.find(n =>
+                    cat === 'all' || n.data.category === cat || n.data.type === cat
+                );
+                if (firstMatch) this.selectNode(firstMatch, false);
+            });
+        });
+
+        // Dock Prev / Next / Open Dossier
+        document.getElementById('prev-node-btn')?.addEventListener('click', () => this.navigateNode(-1, false));
+        document.getElementById('next-node-btn')?.addEventListener('click', () => this.navigateNode(1, false));
+        this.dockBtn?.addEventListener('click', () => {
+            const node = this.world?.nodes?.[this.activeNodeIndex];
+            if (node) this.selectNode(node, true);
+        });
+
+        // Quick Actions
+        document.getElementById('about-quick-btn')?.addEventListener('click', () => {
+            const origin = this.world?.nodes?.[0];
+            if (origin) this.selectNode(origin, true);
+        });
+        document.getElementById('reset-cam-btn')?.addEventListener('click', () => {
+            this.audio?.play('click');
+            this._scrollTarget = 0;
+            if (this.world?.nodeGroup) {
+                gsap.to(this.world.nodeGroup.rotation, { x: 0, y: 0, z: 0, duration: 1.4, ease: 'expo.out', overwrite: 'auto' });
+            }
+            if (this.camera?.instance) {
+                gsap.to(this.camera.instance.position, { x: 0, y: 0, z: this.isMobile ? 120 : 150, duration: 1.4, ease: 'expo.out', overwrite: 'auto' });
+            }
+        });
+
+        // Drawer open/close
+        this.indexBtn?.addEventListener('click', () => this.toggleDrawer());
+        document.getElementById('drawer-close-btn')?.addEventListener('click', () => this.toggleDrawer(false));
+        document.getElementById('drawer-backdrop')?.addEventListener('click', () => this.toggleDrawer(false));
+
+        // Keyboard shortcuts when modal is closed
+        window.addEventListener('keydown', e => {
+            if (!this._started) return;
+            if (e.key === 'Escape' && this.drawerEl?.classList.contains('open')) {
+                this.toggleDrawer(false);
+                return;
+            }
+            if (this.isModalOpen) return;
+            if (e.key === 'i' || e.key === 'I') {
+                this.toggleDrawer();
+            } else if (e.key === 'ArrowLeft') {
+                this.navigateNode(-1, false);
+            } else if (e.key === 'ArrowRight') {
+                this.navigateNode(1, false);
+            }
+        });
+    }
+
+    toggleDrawer(forceState) {
+        if (!this.drawerEl) return;
+        const willOpen = typeof forceState === 'boolean' ? forceState : !this.drawerEl.classList.contains('open');
+        this.drawerEl.classList.toggle('open', willOpen);
+        this.drawerEl.setAttribute('aria-hidden', String(!willOpen));
+        this.indexBtn?.setAttribute('aria-expanded', String(willOpen));
+        this.audio?.play('click');
+    }
+
+    _updateDockReadout(node) {
+        if (!node?.data) return;
+        const d = node.data;
+        if (this.dockKicker) this.dockKicker.textContent = `${d.code || 'NODE'} · ${(d.kicker || 'SYSTEM').toUpperCase()}`;
+        if (this.dockTitle)  this.dockTitle.textContent  = `${d.title} — Open Dossier ↗`;
+        this.dockBtn?.style.setProperty('--dock-accent', d.accent || '#38bdf8');
+    }
+
+    selectNode(node, openModal = true) {
+        if (!node || !this.world?.nodes) return;
+        const idx = this.world.nodes.indexOf(node);
+        if (idx !== -1) this.activeNodeIndex = idx;
+
+        this.audio?.play('click');
+        this._updateDockReadout(node);
+
+        // Rotate constellation so selected node faces toward the camera
+        const pos = node.originalPos;
+        if (pos && pos.lengthSq() > 1 && this.world?.nodeGroup) {
+            const targetRotY = -Math.atan2(pos.x, pos.z);
+            const horizDist  = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+            const targetRotX = Math.max(-0.55, Math.min(0.55, Math.atan2(pos.y, horizDist) * 0.65));
+            gsap.to(this.world.nodeGroup.rotation, {
+                x: targetRotX,
+                y: targetRotY,
+                duration: 1.25,
+                ease: 'expo.out',
+                overwrite: 'auto'
+            });
+        }
+
+        if (openModal) {
+            this.overlay?.show(node.data);
+        }
+    }
+
+    navigateNode(dir = 1, openModal = false) {
+        const nodes = this.world?.nodes;
+        if (!nodes?.length) return;
+        this.activeNodeIndex = (this.activeNodeIndex + dir + nodes.length) % nodes.length;
+        const targetNode = nodes[this.activeNodeIndex];
+        this.selectNode(targetNode, openModal);
     }
 
     /* ── TIME AWARENESS ────────────────────────────── */
@@ -676,18 +843,6 @@ export default class Experience {
         this._dreamIdx = 0;
     }
 
-    showDream(idx) {
-        const el = this._dreamEl;
-        if (!el) return;
-        const text = this._dreamTexts[idx % this._dreamTexts.length];
-        const tEl = el.querySelector('.dream-text');
-        if (tEl) tEl.textContent = text;
-        el.classList.add('active');
-        clearTimeout(this._dreamTimer);
-        this._dreamTimer = setTimeout(() => el.classList.remove('active'), 5000);
-        this._dreamIdx++;
-    }
-
     _setupTouchDrag() {
         if (!this.isMobile) return;
         // Touch drag is handled in ParadigmEffects + World._touchSetup
@@ -732,16 +887,7 @@ export default class Experience {
         }
     }
 
-    _showDream(idx) {
-        if (this.paradigm) this.paradigm.showDream?.(idx);
-        else this._showSecretMsg(this._dreamTexts?.[idx % 7] || '');
-    }
-
-    showDream(idx) { this._showDream(idx); }
-
-    _checkArchipelago() {} // removed — stub to prevent errors
-
-        _showSecretMsg(text) {
+    _showSecretMsg(text) {
         const el = document.getElementById('secret-msg');
         if (!el) return;
         el.textContent = text;
@@ -751,7 +897,7 @@ export default class Experience {
     }
 
     _showDream(idx) {
-        const dreams = [
+        const dreams = this._dreamTexts || [
             "I dreamt of building systems that outlive me.",
             "In parallel reality #7, I chose silence. Here, I chose code.",
             "APEX HUMANITY: not domination — elevation.",
@@ -771,11 +917,11 @@ export default class Experience {
 
     showDream(idx) { this._showDream(idx); }
 
-        startExperience() {
+    startExperience() {
         if (this._started) return;
         this._started = true;
 
-        gsap.to('#preloader', { opacity: 0, duration: 1.4, ease: 'power3.inOut',
+        gsap.to('#preloader', { opacity: 0, duration: 1.2, ease: 'power3.inOut',
             onComplete: () => {
                 const p = document.getElementById('preloader');
                 if (p) p.style.display = 'none';
@@ -784,26 +930,29 @@ export default class Experience {
 
         this.audio.setupSounds();
         this.audio.play('intro');
-        setTimeout(() => this.audio.playBg(), 2800);
+        setTimeout(() => this.audio.playBg(), 2400);
 
         this.paradigm = new ParadigmEffects();
         this._setupPaleBlueDot();
         this._setupRealityCollapse();
         this._setupDreamArchive();
 
+        // Reveal HUD Header & Bottom Orbital Dock
         setTimeout(() => {
+            document.getElementById('hud-header')?.classList.add('visible');
+            document.getElementById('hud-dock')?.classList.add('visible');
             if (this.hudEl?.wrap) this.hudEl.wrap.classList.add('visible');
-        }, 5500);
+        }, 1200);
 
         setTimeout(() => {
             const hint = document.getElementById('hint-text');
-            if (hint) { hint.style.display = 'block'; gsap.to(hint, { opacity: .5, duration: 2 }); }
-        }, 5800);
+            if (hint) { hint.style.display = 'block'; gsap.to(hint, { opacity: .65, duration: 1.8 }); }
+        }, 2800);
 
         setTimeout(() => {
             const sh = document.getElementById('scroll-hint');
             if (sh) { sh.style.display = 'flex'; requestAnimationFrame(() => sh.classList.add('visible')); }
-        }, 7000);
+        }, 3600);
 
         const cam = this.camera.instance;
         const rig = this.camera.rig;

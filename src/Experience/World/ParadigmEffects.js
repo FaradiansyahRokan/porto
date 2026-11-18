@@ -316,17 +316,10 @@ export default class ParadigmEffects {
             if (this._chromCanvas) this._chromCanvas.style.opacity = '0';
             return;
         }
-        const px = Math.round(s * 5);
-        const canvas = document.querySelector('.webgl');
-        if (canvas) {
-            canvas.style.filter = s > 0.02
-                ? `brightness(1) contrast(1.02)`
-                : 'none';
-        }
-        // Box shadow aberration on overlay div
+        const px = Math.round(s * 6);
         if (this._chromCanvas) {
-            this._chromCanvas.style.opacity   = String(Math.min(s * 2, 0.6));
-            this._chromCanvas.style.boxShadow = `inset ${px}px 0 0 rgba(255,0,0,0.08), inset -${px}px 0 0 rgba(0,0,255,0.08)`;
+            this._chromCanvas.style.opacity   = String(Math.min(s * 2.2, 0.65));
+            this._chromCanvas.style.boxShadow = `inset ${px}px 0 0 rgba(255,40,80,0.12), inset -${px}px 0 0 rgba(40,180,255,0.12)`;
         }
     }
 

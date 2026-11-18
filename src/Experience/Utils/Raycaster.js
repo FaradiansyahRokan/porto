@@ -1,86 +1,81 @@
 import * as THREE from 'three';
-import gsap from 'gsap'; 
 import Experience from '../Experience.js';
 
 export default class Raycaster {
     constructor() {
         this.experience = new Experience();
-        this.scene = this.experience.scene;
-        this.camera = this.experience.camera;
-        this.world = this.experience.world;
+        this.scene      = this.experience.scene;
+        this.camera     = this.experience.camera;
+        this.world      = this.experience.world;
 
         this.instance = new THREE.Raycaster();
-        this.mouse = new THREE.Vector2();
-        
-        this.currentIntersect = null;
+        this.mouse    = new THREE.Vector2(-999, -999);
 
-        this.rawMouse = { x: 0, y: 0 }; 
+        this.currentIntersect = null;
+        this.rawMouse = { x: 0, y: 0 };
 
         window.addEventListener('mousemove', (event) => this.onMouseMove(event));
-        window.addEventListener('click', () => this.onClick());
+        window.addEventListener('click', (event) => this.onClick(event));
     }
 
     onMouseMove(event) {
         this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         this.rawMouse.x = event.clientX;
         this.rawMouse.y = event.clientY;
     }
 
-    onClick() {
-        if(this.currentIntersect && this.currentIntersect.data) {
-            if(this.experience.audio) this.experience.audio.play('click');
-            this.experience.overlay.show(this.currentIntersect.data);
+    onClick(event) {
+        if (!this.experience._started || this.experience.isModalOpen) return;
+        if (this.experience.world?._dragMoved) return;
+        if (event?.target?.closest?.('header, .hud-dock, .quick-drawer, .overlay, .project-label, button, a')) return;
+
+        if (this.currentIntersect && this.currentIntersect.data) {
+            this.experience.selectNode?.(this.currentIntersect);
         }
     }
 
     update() {
-        // 1. Cek Modal Open
-        if(this.experience.isModalOpen) {
-            if(this.currentIntersect) {
-                this.currentIntersect.onMouseLeave(); 
-                if(this.experience.cursor) this.experience.cursor.leave(); 
-                this.currentIntersect = null; 
+        if (this.experience.isModalOpen || !this.experience._started) {
+            if (this.currentIntersect) {
+                this.currentIntersect.onMouseLeave();
+                if (this.experience.cursor) this.experience.cursor.leave();
+                this.currentIntersect = null;
             }
-            return; 
+            return;
         }
 
         this.instance.setFromCamera(this.mouse, this.camera.instance);
-
-        // --- PERBAIKAN UTAMA DISINI ---
-        // Kita ambil referensi world langsung dari experience (lebih aman)
         const world = this.experience.world;
 
-        // SAFETY CHECK:
-        // Pastikan 'world' ada, 'nodes' ada, dan 'nodeGroup' ada.
-        // Kalau salah satu belum siap, JANGAN jalankan kode bawahnya (biar gak error)
-        if(world && world.nodes && world.nodeGroup) {
-            
-            const objectsToTest = [];
-            // Sekarang aman untuk diloop
-            world.nodes.forEach(node => objectsToTest.push(node.group)); 
+        if (world && world.nodes && world.nodeGroup) {
+            const objectsToTest = world.nodes.map(node => node.planetMesh).filter(Boolean);
+            const intersects = this.instance.intersectObjects(objectsToTest, false);
 
-            const intersects = this.instance.intersectObjects(objectsToTest, true);
-
-            if(intersects.length > 0) {
-                const selectedObject = intersects[0].object;
+            if (intersects.length > 0) {
+                let obj = intersects[0].object;
                 let selectedNode = null;
-                
-                if(selectedObject.parent && selectedObject.parent.userData.nodeInstance) {
-                     selectedNode = selectedObject.parent.userData.nodeInstance;
+                while (obj && !selectedNode) {
+                    if (obj.userData?.nodeInstance) selectedNode = obj.userData.nodeInstance;
+                    obj = obj.parent;
                 }
 
-                if(this.currentIntersect === null) {
-                    if(selectedNode) selectedNode.onMouseEnter();
-                    if(this.experience.cursor) this.experience.cursor.enter();
+                if (selectedNode !== this.currentIntersect) {
+                    if (this.currentIntersect) {
+                        this.currentIntersect.onMouseLeave();
+                    }
+                    if (selectedNode) {
+                        selectedNode.onMouseEnter();
+                        if (this.experience.cursor) this.experience.cursor.enter();
+                    }
+                    this.currentIntersect = selectedNode;
                 }
-                this.currentIntersect = selectedNode;
             } else {
-                if(this.currentIntersect) {
+                if (this.currentIntersect) {
                     this.currentIntersect.onMouseLeave();
-                    if(this.experience.cursor) this.experience.cursor.leave();
+                    if (this.experience.cursor) this.experience.cursor.leave();
+                    this.currentIntersect = null;
                 }
-                this.currentIntersect = null;
             }
         }
     }

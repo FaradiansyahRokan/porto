@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
-<meta name="theme-color" content="#000000"/>
-<title>Rokan S.F. — Interstellar</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0"/>
+<meta name="theme-color" content="#03050c"/>
+<meta name="description" content="Rokan S. F. — Founder of Archipelago Dynamics, Fullstack, DevOps, Android & Web3 Engineer. Interactive 3D Cosmic Portfolio."/>
+<title>Rokan S. F. — Interstellar Mission Control</title>
+<link rel="icon" type="image/svg+xml" href="./assets/R.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
@@ -14,48 +16,147 @@
 <div id="preloader">
     <div class="hud-lines"></div>
     <div class="loader-content">
+        <div class="loader-badge">
+            <span class="loader-badge-dot"></span>
+            <span>ARCHIPELAGO DYNAMICS · MISSION TELEMETRY</span>
+        </div>
         <h1 data-text="ROKAN S.F.">ROKAN S.F.</h1>
-        <p class="sub">Founder · Engineer · Visionary</p>
-        <div class="bar-track"><div class="bar-fill"></div></div>
-        <p class="loader-status" id="loader-status">Scanning deep space...</p>
-        <button id="start-btn" disabled>// INITIALIZING UNIVERSE //</button>
+        <p class="sub">Founder · Fullstack &amp; DevOps Engineer · Visionary</p>
+        <div class="loader-progress-wrap">
+            <div class="bar-track"><div class="bar-fill"></div></div>
+            <div class="loader-meta">
+                <span class="loader-status" id="loader-status">Scanning deep space...</span>
+                <span class="loader-pct" id="loader-pct">0%</span>
+            </div>
+        </div>
+        <button id="start-btn" type="button" disabled>// INITIALIZING UNIVERSE //</button>
     </div>
 </div>
 
 <!-- ── CANVAS ─────────────────────────────────── -->
 <canvas class="webgl"></canvas>
 
-<!-- ── HEADER ─────────────────────────────────── -->
-<header>
-    <div class="logo" id="logo-trigger" title="Triple-click for something">RSF</div>
-    <div style="display:flex;align-items:center;gap:10px;">
-        <button class="audio-btn" id="audio-btn">
+<!-- ── TOP MISSION CONTROL HEADER ─────────────── -->
+<header class="hud-header" id="hud-header">
+    <div class="header-left">
+        <button type="button" class="logo" id="logo-trigger" title="Triple-click for Matrix Mode">
+            <span class="logo-mark">RSF</span>
+        </button>
+        <div class="brand-meta">
+            <div class="brand-name">
+                <span>ROKAN S. F.</span>
+                <span class="brand-status" title="System Online"></span>
+            </div>
+            <span class="brand-role">Founder @ Archipelago Dynamics · Engineer</span>
+        </div>
+    </div>
+
+    <nav class="hud-filters" id="hud-filters" aria-label="Filter constellation nodes">
+        <button type="button" class="filter-pill active" data-filter="all">All Nodes <span class="pill-count">13</span></button>
+        <button type="button" class="filter-pill" data-filter="origin">Origin</button>
+        <button type="button" class="filter-pill" data-filter="web">Web &amp; Cloud</button>
+        <button type="button" class="filter-pill" data-filter="mobile">Android</button>
+        <button type="button" class="filter-pill" data-filter="infra">Infra &amp; DevOps</button>
+        <button type="button" class="filter-pill" data-filter="web3">Web3</button>
+        <button type="button" class="filter-pill" data-filter="credentials">Credentials</button>
+    </nav>
+
+    <div class="header-actions">
+        <button type="button" class="hud-action-btn hud-action-btn--primary" id="index-btn" aria-expanded="false" aria-controls="quick-drawer">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <rect x="1.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="9.5" y="1.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="1.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="9.5" y="9.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+            </svg>
+            <span>All Missions</span>
+            <kbd class="hud-kbd">I</kbd>
+        </button>
+
+        <a class="hud-action-btn" href="./assets/PORTOFOLIO_ROKAN.pdf" target="_blank" rel="noopener">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>CV / PDF</span>
+        </a>
+
+        <button type="button" class="audio-btn" id="audio-btn" aria-label="Toggle audio">
             <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-            <span id="audio-text">SFX</span>
+            <span id="audio-text">AUDIO ON</span>
         </button>
     </div>
 </header>
 
-<!-- ── HUD COORDINATES ────────────────────────── -->
-<div class="hud-coords" id="hud-coords">
-    <div id="hud-x">X: 0.000</div>
-    <div id="hud-y">Y: 0.000</div>
-    <div id="hud-z">Z: 0.000</div>
-    <div id="hud-visitors" style="margin-top:5px;opacity:.4">ACTIVE: —</div>
-    <div id="hud-sims" style="opacity:.4">SIMS: —</div>
+<!-- ── BOTTOM ORBITAL DOCK ────────────────────── -->
+<div class="hud-dock" id="hud-dock">
+    <!-- Left: Telemetry Coordinates -->
+    <div class="hud-coords" id="hud-coords">
+        <div class="coords-row">
+            <span id="hud-x">X: 0.00</span>
+            <span id="hud-y">Y: 0.00</span>
+            <span id="hud-z">Z: 150.00</span>
+        </div>
+        <div class="coords-row coords-row--dim">
+            <span id="hud-visitors">ACTIVE: 164</span>
+            <span>·</span>
+            <span id="hud-sims">SIMS: 9,120</span>
+        </div>
+    </div>
+
+    <!-- Center: Interactive Node Teleporter -->
+    <div class="dock-navigator">
+        <button type="button" class="dock-nav-btn" id="prev-node-btn" title="Previous Node (Left Arrow)" aria-label="Previous Node">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="dock-current-node" id="dock-current-btn" title="Click to open dossier">
+            <span class="dock-node-kicker" id="dock-node-kicker">SYS-00 · ORIGIN NODE</span>
+            <span class="dock-node-title" id="dock-node-title">Rokan S. F. — Inspect Dossier</span>
+        </button>
+        <button type="button" class="dock-nav-btn" id="next-node-btn" title="Next Node (Right Arrow)" aria-label="Next Node">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+    </div>
+
+    <!-- Right: Quick Camera Actions -->
+    <div class="dock-controls">
+        <button type="button" class="dock-ctrl-btn" id="about-quick-btn">
+            <span class="ctrl-dot"></span>
+            <span>About Rokan</span>
+        </button>
+        <button type="button" class="dock-ctrl-btn" id="reset-cam-btn" title="Reset Camera Orbit">
+            <span>Reset Orbit</span>
+        </button>
+    </div>
 </div>
+
+<!-- ── QUICK MISSION DIRECTORY DRAWER ─────────── -->
+<aside class="quick-drawer" id="quick-drawer" aria-hidden="true" aria-label="Mission Directory">
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <div class="drawer-panel">
+        <div class="drawer-header">
+            <div>
+                <span class="drawer-kicker">// CONSTELLATION INDEX · 13 NODES</span>
+                <h2 class="drawer-title">Mission Directory</h2>
+            </div>
+            <button type="button" class="close-btn" id="drawer-close-btn" aria-label="Close directory">
+                <span class="close-icon">✕</span>
+            </button>
+        </div>
+        <div class="drawer-list" id="drawer-list"></div>
+    </div>
+</aside>
 
 <!-- ── SCROLL HINT ────────────────────────────── -->
 <div class="scroll-hint" id="scroll-hint" style="display:none">
     <div class="scroll-line"></div>
-    <span>SCROLL TO NAVIGATE</span>
+    <span>DRAG TO ORBIT · SCROLL TO ZOOM</span>
 </div>
 
 <!-- ── WAYPOINT LABEL ─────────────────────────── -->
 <div class="waypoint-label" id="waypoint-label"></div>
 
 <!-- ── HINT ──────────────────────────────────── -->
-<p class="hint-text" id="hint-text" style="display:none">— tap a planet to explore —</p>
+<p class="hint-text" id="hint-text" style="display:none">— drag to orbit · click any planet or label to inspect —</p>
 
 <!-- ── MOBILE TOUCH ──────────────────────────── -->
 <div class="touch-indicator">
@@ -70,43 +171,51 @@
     <div class="glitch-scan"></div>
     <div class="glitch-text">MATRIX MODE ACTIVE</div>
     <div class="glitch-code" id="glitch-code"></div>
-    <div class="glitch-exit" onclick="window.experience?._triggerGlitch()">[ EXIT MATRIX ]</div>
+    <button type="button" class="glitch-exit" onclick="window.experience?._triggerGlitch()">[ EXIT MATRIX ]</button>
 </div>
 
 <!-- ── SECRET MESSAGE ────────────────────────── -->
-<div id="secret-msg"></div>
+<div id="secret-msg" role="status" aria-live="polite"></div>
 
 <!-- ── EASTER EGG HINTS (barely visible) ─────── -->
 <div class="ee-hint" id="ee-hint">
     <span>// KONAMI · APEX · RSF · PALE · ⬤×5 //</span>
 </div>
 
-<!-- ── MODAL ─────────────────────────────────── -->
 <!-- ── MODAL — Cinematic Project Portal ──────────── -->
-<div id="detail-panel" class="overlay">
-    <!-- Particle canvas inside modal -->
+<div id="detail-panel" class="overlay" role="dialog" aria-modal="true" aria-labelledby="panel-title">
     <canvas id="modal-particles" class="modal-particles"></canvas>
 
     <div class="modal-card">
         <!-- LEFT: Visual column -->
         <div class="modal-visual-col">
-            <!-- Scanline overlay -->
             <div class="modal-scanlines"></div>
-            <!-- Image -->
             <img id="panel-image" class="modal-img" src="" alt=""/>
-            <!-- Image overlay gradient -->
             <div class="modal-img-overlay"></div>
-            <!-- Corner decorations -->
             <div class="modal-corner modal-corner--tl"></div>
             <div class="modal-corner modal-corner--br"></div>
+
+            <!-- Type badge -->
+            <div class="modal-type-badge" id="modal-type-badge">PROJECT</div>
+
+            <!-- Telemetry metadata overlay on visual column -->
+            <div class="modal-visual-meta" id="modal-visual-meta">
+                <div class="mv-item">
+                    <span class="mv-label">ROLE</span>
+                    <span class="mv-val" id="modal-meta-role">Lead Engineer</span>
+                </div>
+                <div class="mv-item">
+                    <span class="mv-label">TIMELINE</span>
+                    <span class="mv-val" id="modal-meta-year">2024</span>
+                </div>
+            </div>
+
             <!-- Status bar -->
             <div class="modal-status-bar">
                 <span class="modal-status-dot"></span>
                 <span id="modal-status-text" class="modal-status-text">ACTIVE</span>
                 <span class="modal-status-coords" id="modal-coords">00.00 · 00.00</span>
             </div>
-            <!-- Planet type badge -->
-            <div class="modal-type-badge" id="modal-type-badge">PROJECT</div>
         </div>
 
         <!-- RIGHT: Content column -->
@@ -114,10 +223,11 @@
             <!-- Top bar -->
             <div class="modal-topbar">
                 <div class="modal-topbar-left">
+                    <span class="modal-code-badge" id="panel-code">SYS-00</span>
                     <span class="modal-topbar-line"></span>
                     <span class="modal-kicker" id="panel-kicker"></span>
                 </div>
-                <button class="close-btn" id="close-btn">
+                <button type="button" class="close-btn" id="close-btn" aria-label="Close modal">
                     <span class="close-icon">✕</span>
                 </button>
             </div>
@@ -125,6 +235,7 @@
             <!-- Title block -->
             <div class="modal-title-block">
                 <h2 class="modal-title" id="panel-title"></h2>
+                <p class="modal-subtitle" id="panel-subtitle"></p>
                 <div class="modal-title-line"></div>
             </div>
 
@@ -136,37 +247,28 @@
 
             <!-- Footer -->
             <div class="modal-footer">
-                <a class="modal-btn" id="panel-link" href="#" target="_blank">
-                    <span class="modal-btn-text">Open Mission</span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                </a>
-                <div class="modal-footer-meta" id="modal-footer-meta"></div>
+                <div class="modal-footer-nav">
+                    <button type="button" class="modal-nav-btn" id="modal-prev-btn">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Prev Node</span>
+                    </button>
+                    <button type="button" class="modal-nav-btn" id="modal-next-btn">
+                        <span>Next Node</span>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+
+                <div class="modal-footer-right">
+                    <div class="modal-footer-meta" id="modal-footer-meta"></div>
+                    <a class="modal-btn" id="panel-link" href="#" target="_blank" rel="noopener">
+                        <span class="modal-btn-text">Open Mission</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<script type="module" src="/src/main.js"></script>
-<script>
-// Status messages
-const msgs=['Scanning deep space...','Calibrating hyperdrive...','Mapping stellar coords...','Initializing quantum matrix...','Detecting dark matter...','Neural link active...','Loading dimension data...','Warping spacetime...','Analyzing anomalies...'];
-let mi=0;const el=document.getElementById('loader-status');
-setInterval(()=>{mi=(mi+1)%msgs.length;if(el&&!document.getElementById('start-btn').classList.contains('active'))el.textContent=msgs[mi];},1800);
-
-// Glitch code rain
-const gc=document.getElementById('glitch-code');
-const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノ∇∆∑∏∫APEX RSF VOID NULL://';
-setInterval(()=>{
-    if(gc&&document.getElementById('glitch-overlay').classList.contains('active')){
-        const line=Array.from({length:24},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
-        const d=document.createElement('div');d.textContent=line;d.style.opacity=.1+Math.random()*.35;
-        gc.appendChild(d);if(gc.children.length>18)gc.removeChild(gc.firstChild);
-    }
-},80);
-
-// BH click handler patch (called from World after BH is ready)
-window.addEventListener('bhClick',()=>window._bhClickCallback?.());
-</script>
 
 <!-- ── PALE BLUE DOT OVERLAY ─────────────────────── -->
 <div id="pbd-overlay">
@@ -187,29 +289,11 @@ window.addEventListener('bhClick',()=>window._bhClickCallback?.());
     <div class="dream-source">— Memory Core Fragment //</div>
 </div>
 
+<!-- ── ARCHIPELAGO OVERLAY (Fixed HTML wrapper) ──── -->
+<div id="arch-overlay" style="display:none" aria-hidden="true">
     <div class="arch-text">ARCHIPELAGO DYNAMICS<br><span>rooted in the islands · reaching for the stars</span></div>
     <div class="arch-islands"></div>
 </div>
-
-<script>
-// Reality collapse rain
-const rcRain = document.getElementById('rc-rain');
-function spawnRCLine(){
-    if(!document.getElementById('rc-overlay').classList.contains('active')) return;
-    const d=document.createElement('div');
-    d.className='rc-line';
-    d.style.left=Math.random()*100+'%';
-    d.style.animationDuration=(.4+Math.random()*.6)+'s';
-    d.textContent=Array.from({length:18},()=>'01 アイウエ∇∑'[Math.floor(Math.random()*13)]).join('');
-    rcRain.appendChild(d);
-    setTimeout(()=>d.remove(),1200);
-}
-setInterval(spawnRCLine,40);
-
-// Archipelago particle islands (SVG silhouette)
-
-</script>
-
 
 <!-- ── PATIENCE OVERLAY ──────────────────────────────── -->
 <div id="patience-overlay">
@@ -220,5 +304,45 @@ setInterval(spawnRCLine,40);
 <!-- ── TEAR HINT (barely visible) ───────────────────── -->
 <div id="tear-hint">hold anywhere to tear reality</div>
 
+<script type="module" src="/src/main.js"></script>
+<script>
+// Status messages
+const msgs=['Scanning deep space...','Calibrating hyperdrive...','Mapping stellar coords...','Initializing quantum matrix...','Detecting dark matter...','Neural link active...','Loading dimension data...','Warping spacetime...','Analyzing anomalies...'];
+let mi=0;const el=document.getElementById('loader-status');
+const statusIv=setInterval(()=>{
+    const btn=document.getElementById('start-btn');
+    if(btn&&btn.classList.contains('active')){clearInterval(statusIv);return;}
+    mi=(mi+1)%msgs.length;
+    if(el)el.textContent=msgs[mi];
+},1800);
+
+// Glitch code rain
+const gc=document.getElementById('glitch-code');
+const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノ∇∆∑∏∫APEX RSF VOID NULL://';
+setInterval(()=>{
+    if(gc&&document.getElementById('glitch-overlay')?.classList.contains('active')){
+        const line=Array.from({length:24},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+        const d=document.createElement('div');d.textContent=line;d.style.opacity=.1+Math.random()*.35;
+        gc.appendChild(d);if(gc.children.length>18)gc.removeChild(gc.firstChild);
+    }
+},80);
+
+// BH click handler patch
+window.addEventListener('bhClick',()=>window._bhClickCallback?.());
+
+// Reality collapse rain
+const rcRain = document.getElementById('rc-rain');
+function spawnRCLine(){
+    if(!document.getElementById('rc-overlay')?.classList.contains('active')) return;
+    const d=document.createElement('div');
+    d.className='rc-line';
+    d.style.left=Math.random()*100+'%';
+    d.style.animationDuration=(.4+Math.random()*.6)+'s';
+    d.textContent=Array.from({length:18},()=>'01 アイウエ∇∑'[Math.floor(Math.random()*13)]).join('');
+    rcRain.appendChild(d);
+    setTimeout(()=>d.remove(),1200);
+}
+setInterval(spawnRCLine,40);
+</script>
 </body>
 </html>

@@ -25,12 +25,11 @@ export default class Camera {
     }
 
     _setupMobileGyro() {
-        // Mobile: gyroscope parallax
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', e => {
                 if (e.gamma !== null && e.beta !== null) {
-                    this._targetX = (e.beta  - 40) / 60 * 0.3;   // tilt forward/back
-                    this._targetY = e.gamma / 90 * 0.3;            // tilt left/right
+                    this._targetX = (e.beta  - 40) / 60 * 0.3;
+                    this._targetY = e.gamma / 90 * 0.3;
                 }
             }, { passive: true });
         }
@@ -46,17 +45,19 @@ export default class Camera {
         const isMobile  = this.experience.isMobile;
 
         if (isMobile) {
-            // Smooth gyro on mobile
             this._curX += (this._targetX - this._curX) * 0.04;
             this._curY += (this._targetY - this._curY) * 0.04;
             this.rig.rotation.x = this._curX;
             this.rig.rotation.y = this._curY;
-        } else if (raycaster) {
-            // Mouse parallax on desktop
+        } else if (raycaster && !this.experience._bhCinematicActive) {
+            // Smooth damping without spawning GSAP tweens every frame
             const mouse = raycaster.mouse;
-            const tX = mouse.y * 0.45;
-            const tY = -mouse.x * 0.45;
-            gsap.to(this.rig.rotation, { x: tX, y: tY, duration: 1.8, ease: 'power2.out' });
+            const tX = mouse.y * 0.32;
+            const tY = -mouse.x * 0.32;
+            this._curX += (tX - this._curX) * 0.055;
+            this._curY += (tY - this._curY) * 0.055;
+            this.rig.rotation.x = this._curX;
+            this.rig.rotation.y = this._curY;
         }
     }
 }

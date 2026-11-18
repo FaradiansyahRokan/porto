@@ -3,7 +3,7 @@ import Experience from '../Experience.js';
 import Node from './Node.js';
 import Background from './Background.js';
 // import NeuralNetwork from './NeuralNetwork.js';
-import contentData from '../../data/contentData.js';
+import contentData, { createMissionArtwork } from '../../data/contentData.js';
 import certificationData from '../../data/certifications.js';
 
 export default class World {
@@ -53,19 +53,64 @@ export default class World {
     }
 
     _nodes() {
-        const cert={type:'certification',title:'Sertifikasi',kicker:'Professional',
-            desc:'Kumpulan lisensi dan sertifikasi profesional.',
-            image:'https://placehold.co/800x400/050510/ffffff?text=Certifications',certList:certificationData};
-        const about=contentData.find(d=>d.type==='about');
-        const projs=contentData.filter(d=>d.type!=='about'&&!d.certList);
-        const all=[about,cert,...projs];
-        all.forEach((data,i)=>{
-            const phi=Math.acos(-1+(2*i)/all.length),theta=Math.sqrt(all.length*Math.PI)*phi;
-            const r=this.M?36:46;
-            const pos=new THREE.Vector3().setFromSphericalCoords(r,phi,theta);
-            const node=new Node(data,pos);
-            node.originalPos=pos.clone();
-            this.nodes.push(node); this.nodeGroup.add(node.group);
+        const cert = {
+            id: 'certifications',
+            code: 'CRT-12',
+            type: 'certification',
+            category: 'credentials',
+            title: 'Licenses & Certifications',
+            kicker: 'Verified Credentials',
+            accent: '#00f2fe',
+            accentRgb: [0.0, 0.95, 1.0],
+            role: '11 Professional Certifications',
+            year: '2022 — 2025',
+            status: 'VERIFIED',
+            desc: 'Curated collection of verified professional certifications and licenses across Cloud Infrastructure, DevOps, Network Security (Fortinet NSE), Software Engineering (Dicoding), and C2 English Proficiency (EF SET).',
+            image: createMissionArtwork({
+                code: 'CRT-12',
+                title: 'Verified Credentials',
+                kicker: '11 Professional Licenses',
+                accent: '#00f2fe',
+                secondary: '#38ef7d',
+                pattern: 'web3',
+                tags: ['Google Cloud', 'Fortinet NSE', 'Dicoding', 'EF SET C2']
+            }),
+            certList: certificationData
+        };
+        const about = contentData.find(d => d.type === 'about');
+        const projs = contentData.filter(d => d.type !== 'about' && !d.certList);
+        const all = [about, cert, ...projs];
+
+        const orbitNodes = all.slice(1);
+        all.forEach((data, i) => {
+            let pos;
+            if (i === 0) {
+                // Origin Node sits at the heart of the constellation
+                pos = new THREE.Vector3(0, 0, 0);
+            } else {
+                const idx = i - 1;
+                const total = orbitNodes.length;
+                const phi = Math.acos(-1 + (2 * idx + 1) / total);
+                const theta = Math.sqrt(total * Math.PI) * phi;
+                const r = this.M ? 34 : 44;
+                pos = new THREE.Vector3().setFromSphericalCoords(r, phi, theta);
+            }
+            const node = new Node(data, pos, i);
+            node.originalPos = pos.clone();
+            this.nodes.push(node);
+            this.nodeGroup.add(node.group);
+        });
+    }
+
+    filterByCategory(cat) {
+        this.activeCategory = cat;
+        this.nodes.forEach(node => {
+            if (!cat || cat === 'all') {
+                node.setDimmed(false);
+            } else {
+                const match = node.data.category === cat || node.data.type === cat;
+                node.setDimmed(!match);
+            }
         });
     }
 
@@ -691,16 +736,62 @@ export default class World {
     }
 
     _touchSetup(){
-        if(!this.M)return;
-        window.addEventListener('touchend',e=>{
-            if(e.changedTouches.length!==1)return;
-            const t=e.changedTouches[0];
-            if(this.experience.raycaster){
-                this.experience.raycaster.mouse.x=(t.clientX/window.innerWidth)*2-1;
-                this.experience.raycaster.mouse.y=-(t.clientY/window.innerHeight)*2+1;
+        // Interactive 360° drag-to-orbit for both desktop & mobile
+        this._isDragging = false;
+        this._dragMoved  = false;
+        this._lastPtr    = { x: 0, y: 0 };
+        this._dragVel    = { x: 0, y: 0 };
+
+        const onDown = (x, y, target) => {
+            if (this.experience.isModalOpen || !this.experience._started) return;
+            if (target && target.closest && target.closest('header, .hud-dock, .quick-drawer, .overlay, .project-label, button, a')) return;
+            this._isDragging = true;
+            this._dragMoved  = false;
+            this._lastPtr.x  = x;
+            this._lastPtr.y  = y;
+        };
+
+        const onMove = (x, y) => {
+            if (!this._isDragging || this.experience.isModalOpen) return;
+            const dx = x - this._lastPtr.x;
+            const dy = y - this._lastPtr.y;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this._dragMoved = true;
+            this._lastPtr.x = x;
+            this._lastPtr.y = y;
+
+            this._dragVel.y = dx * 0.0045;
+            this._dragVel.x = dy * 0.0035;
+            this.nodeGroup.rotation.y += this._dragVel.y;
+            this.nodeGroup.rotation.x = Math.max(-0.85, Math.min(0.85, this.nodeGroup.rotation.x + this._dragVel.x));
+        };
+
+        const onUp = () => {
+            this._isDragging = false;
+        };
+
+        window.addEventListener('mousedown', e => onDown(e.clientX, e.clientY, e.target));
+        window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', onUp);
+
+        window.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) onDown(e.touches[0].clientX, e.touches[0].clientY, e.target);
+        }, { passive: true });
+        window.addEventListener('touchmove', e => {
+            if (e.touches.length === 1) onMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+        window.addEventListener('touchend', e => {
+            const wasMoved = this._dragMoved;
+            onUp();
+            if (!this.M || wasMoved || e.changedTouches.length !== 1) return;
+            if (e.target && e.target.closest && e.target.closest('header, .hud-dock, .quick-drawer, .overlay, .project-label, button, a')) return;
+            const t = e.changedTouches[0];
+            if (this.experience.raycaster) {
+                this.experience.raycaster.mouse.x = (t.clientX / window.innerWidth) * 2 - 1;
+                this.experience.raycaster.mouse.y = -(t.clientY / window.innerHeight) * 2 + 1;
+                this.experience.raycaster.update();
                 this.experience.raycaster.onClick();
             }
-        },{passive:true});
+        }, { passive: true });
     }
 
     pauseRotation(){this.isPaused=true;}resumeRotation(){this.isPaused=false;}
@@ -772,7 +863,13 @@ export default class World {
 
         const hovering=this.experience.raycaster?.currentIntersect;
         const glitching = this.nodeGroup.userData._glitchSpeedUp;
-        if(!this.isPaused&&!hovering){
+        if (!this._isDragging && this._dragVel) {
+            this.nodeGroup.rotation.y += this._dragVel.y;
+            this.nodeGroup.rotation.x = Math.max(-0.85, Math.min(0.85, this.nodeGroup.rotation.x + this._dragVel.x));
+            this._dragVel.x *= 0.92;
+            this._dragVel.y *= 0.92;
+        }
+        if(!this.isPaused&&!hovering&&!this._isDragging){
             this.nodeGroup.rotation.y += glitching ? .008 : .00042;
             this.nodeGroup.rotation.x += glitching ? .003 : .000062;
         }
