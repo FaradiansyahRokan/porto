@@ -325,17 +325,20 @@ export default class Experience {
             this.camera?.flyToNode(node);
             this.overlay?.show(node.data);
         } else {
-            // Rotate constellation so selected node faces toward the camera in overview
+            // Rotate constellation along shortest angular path so selected node faces camera
             const pos = node.originalPos;
             if (pos && pos.lengthSq() > 1 && this.world?.nodeGroup) {
-                const targetRotY = -Math.atan2(pos.x, pos.z);
+                const desiredY = -Math.atan2(pos.x, pos.z);
+                const curY     = this.world.nodeGroup.rotation.y;
+                const deltaY   = Math.atan2(Math.sin(desiredY - curY), Math.cos(desiredY - curY));
+                const targetRotY = curY + deltaY;
                 const horizDist  = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
-                const targetRotX = Math.max(-0.45, Math.min(0.45, Math.atan2(pos.y, horizDist) * 0.5));
+                const targetRotX = Math.max(-0.4, Math.min(0.4, Math.atan2(pos.y, horizDist) * 0.45));
                 gsap.to(this.world.nodeGroup.rotation, {
                     x: targetRotX,
                     y: targetRotY,
-                    duration: 1.25,
-                    ease: 'expo.out',
+                    duration: 0.95,
+                    ease: 'power3.out',
                     overwrite: 'auto'
                 });
             }

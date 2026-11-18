@@ -53,19 +53,24 @@ export default class Camera {
         const worldGroup = this.experience.world.nodeGroup;
         const pos = node.originalPos.clone();
 
-        // First align worldGroup rotation so the target node is brought to the front hemisphere
-        let targetGroupRotY = 0;
-        let targetGroupRotX = 0;
+        // Align worldGroup rotation using shortest angular path so Next/Prev never spins 330°
+        let targetGroupRotY = worldGroup.rotation.y;
+        const targetGroupRotX = 0;
         if (pos.lengthSq() > 1) {
-            targetGroupRotY = -Math.atan2(pos.x, pos.z);
+            const desiredY = -Math.atan2(pos.x, pos.z);
+            const deltaY = Math.atan2(
+                Math.sin(desiredY - worldGroup.rotation.y),
+                Math.cos(desiredY - worldGroup.rotation.y)
+            );
+            targetGroupRotY = worldGroup.rotation.y + deltaY;
         }
 
         gsap.to(worldGroup.rotation, {
             x: targetGroupRotX,
             y: targetGroupRotY,
             z: 0,
-            duration: 1.35,
-            ease: 'expo.out',
+            duration: 1.0,
+            ease: 'power3.out',
             overwrite: 'auto'
         });
 

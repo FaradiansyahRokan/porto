@@ -85,19 +85,19 @@ export default class World {
         all.forEach((data, i) => {
             let pos;
             if (i === 0) {
-                // Origin Singularity sits at the nexus of the Spacetime Well
+                // Origin Singularity sits at the center
                 pos = new THREE.Vector3(0, 2, 0);
             } else {
-                // Golden Spiral Sanctuary arrangement around the Singularity
+                // Sequential orbital ring so Next/Prev steps smoothly to the adjacent neighbor (~30° apart)
                 const idx = i - 1;
                 const total = orbitNodes.length;
-                const goldenAngle = idx * 2.39996; // ~137.5 deg in radians
-                const radius = (this.M ? 22 : 28) + (idx / Math.max(1, total - 1)) * (this.M ? 22 : 30);
-                const y = Math.sin(idx * 1.15) * 11 + ((idx % 2 === 0) ? 3 : -3);
+                const angle = (idx / total) * Math.PI * 2;
+                const radius = (this.M ? 28 : 38) + (idx % 2 === 0 ? 0 : 7);
+                const y = Math.sin(idx * 1.05) * 6.5;
                 pos = new THREE.Vector3(
-                    Math.cos(goldenAngle) * radius,
+                    Math.sin(angle) * radius,
                     y,
-                    Math.sin(goldenAngle) * radius
+                    Math.cos(angle) * radius
                 );
             }
             const node = new Node(data, pos, i);
