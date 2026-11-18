@@ -17,6 +17,10 @@ export default class Camera {
         this.isInspecting = false;
         this.lookAtTarget = new THREE.Vector3(0, 0, 0);
 
+        // Smooth scroll orbital state (overview only)
+        this._scrollVal = 0;
+        this._overviewPos = new THREE.Vector3(0, 14, 118);
+
         this.setInstance();
         this._setupMobileGyro();
     }
@@ -25,7 +29,6 @@ export default class Camera {
         this.rig = new THREE.Group();
         this.scene.add(this.rig);
         this.instance = new THREE.PerspectiveCamera(48, this.sizes.width / this.sizes.height, 0.1, 5000);
-        // Elevated vantage point so the 3D Spacetime Gravity Grid & Citadel Rings feel monumental
         this.instance.position.set(0, 14, 118);
         this.instance.lookAt(this.lookAtTarget);
         this.rig.add(this.instance);
@@ -35,17 +38,29 @@ export default class Camera {
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', e => {
                 if (e.gamma !== null && e.beta !== null) {
-                    this._targetX = (e.beta  - 40) / 60 * 0.25;
-                    this._targetY = e.gamma / 90 * 0.25;
+                    this._targetX = (e.beta  - 40) / 60 * 0.22;
+                    this._targetY = e.gamma / 90 * 0.22;
                 }
             }, { passive: true });
         }
     }
 
     /**
-     * Smoothly flies the 3D camera right up to a sculptural Relic,
-     * framing it in the left-center 3D viewport while the Dossier Blade opens on the right.
+     * Smoothly glides the overview camera along a calming Interstellar orbital arc
+     * driven by momentum scroll progress (0 -> 1).
      */
+    setScrollOffset(progress) {
+        if (this.isInspecting || this.experience._bhCinematicActive || !this.experience._started) return;
+        this._scrollVal = progress;
+
+        const baseZ = this.experience.isMobile ? 108 : 118;
+        const targetZ = baseZ - progress * 44;              // Smoothly glide closer (118 -> 74)
+        const targetY = 14 - progress * 10 + Math.sin(progress * Math.PI) * 5;
+        const targetX = Math.sin(progress * Math.PI * 1.2) * 16;
+
+        this._overviewPos.set(targetX, targetY, targetZ);
+    }
+
     flyToNode(node) {
         if (!node || !this.experience.world?.nodeGroup) return;
         this.isInspecting = true;
@@ -69,17 +84,15 @@ export default class Camera {
             x: targetGroupRotX,
             y: targetGroupRotY,
             z: 0,
-            duration: 1.0,
+            duration: 1.05,
             ease: 'power3.out',
             overwrite: 'auto'
         });
 
-        // After rotation, the node's position in world space is at angle 0 in X/Z (i.e. x=0, z=radius)
         const rHoriz = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
         const nodeWorldAfter = new THREE.Vector3(0, pos.y, rHoriz);
 
         const dist = node.cfg.r * (this.experience.isMobile ? 6.2 : 4.8) + 5.0;
-        // Offset lookAt to the right on desktop so the 3D Relic is framed on the left side of the screen
         const sideOffset = this.experience.isMobile ? 0 : node.cfg.r * 2.15;
         const verticalOffset = this.experience.isMobile ? -node.cfg.r * 1.4 : 0;
 
@@ -98,7 +111,7 @@ export default class Camera {
             x: camDest.x,
             y: camDest.y,
             z: camDest.z,
-            duration: 1.4,
+            duration: 1.3,
             ease: 'expo.out',
             overwrite: 'auto'
         });
@@ -107,7 +120,7 @@ export default class Camera {
             x: lookDest.x,
             y: lookDest.y,
             z: lookDest.z,
-            duration: 1.4,
+            duration: 1.3,
             ease: 'expo.out',
             overwrite: 'auto'
         });
@@ -115,13 +128,13 @@ export default class Camera {
 
     returnToOverview() {
         this.isInspecting = false;
-        const zOverview = this.experience.isMobile ? 108 : 118;
+        this.setScrollOffset(this._scrollVal);
 
         gsap.to(this.instance.position, {
-            x: 0,
-            y: 14,
-            z: zOverview,
-            duration: 1.35,
+            x: this._overviewPos.x,
+            y: this._overviewPos.y,
+            z: this._overviewPos.z,
+            duration: 1.25,
             ease: 'expo.out',
             overwrite: 'auto'
         });
@@ -130,7 +143,7 @@ export default class Camera {
             x: 0,
             y: 0,
             z: 0,
-            duration: 1.35,
+            duration: 1.25,
             ease: 'expo.out',
             overwrite: 'auto'
         });
@@ -142,23 +155,33 @@ export default class Camera {
     }
 
     update() {
+        const dt = Math.min((this.experience.time?.delta || 16) / 1000, 0.05);
+        // Frame-rate independent exponential damping for 60Hz/120Hz/144Hz smoothness
+        const damp = 1 - Math.exp(-5.2 * dt);
+
         const raycaster = this.experience.raycaster;
         const isMobile  = this.experience.isMobile;
-        const parallaxMult = this.isInspecting ? 0.06 : 0.24;
+        const parallaxMult = this.isInspecting ? 0.055 : 0.2;
 
         if (isMobile) {
-            this._curX += (this._targetX * parallaxMult - this._curX) * 0.05;
-            this._curY += (this._targetY * parallaxMult - this._curY) * 0.05;
+            this._curX += (this._targetX * parallaxMult - this._curX) * damp;
+            this._curY += (this._targetY * parallaxMult - this._curY) * damp;
             this.rig.rotation.x = this._curX;
             this.rig.rotation.y = this._curY;
         } else if (raycaster && !this.experience._bhCinematicActive) {
             const mouse = raycaster.mouse;
             const tX = mouse.y * parallaxMult;
             const tY = -mouse.x * parallaxMult;
-            this._curX += (tX - this._curX) * 0.055;
-            this._curY += (tY - this._curY) * 0.055;
+            this._curX += (tX - this._curX) * damp;
+            this._curY += (tY - this._curY) * damp;
             this.rig.rotation.x = this._curX;
             this.rig.rotation.y = this._curY;
+        }
+
+        // Smoothly glide overview camera toward scroll orbital target
+        if (this.experience._started && !this.isInspecting && !this.experience._bhCinematicActive && !this._introActive) {
+            const camDamp = 1 - Math.exp(-4.0 * dt);
+            this.instance.position.lerp(this._overviewPos, camDamp);
         }
 
         if (!this.experience._bhCinematicActive) {

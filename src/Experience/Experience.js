@@ -412,26 +412,16 @@ export default class Experience {
         }, 3000);
     }
 
-    /* ── SCROLL-BASED CAMERA NARRATIVE ────────────── */
+    /* ── PHYSICS MOMENTUM SCROLL NARRATIVE ────────── */
     _setupScrollNarrative() {
-        // We simulate scroll via wheel + touch on the canvas itself
-        // Maps scroll progress (0-1) to camera waypoints through the galaxy
         this._scrollProgress = 0;
-        this._scrollTarget   = 0;
+        this._scrollVel      = 0;
 
-        this._waypoints = [
-            { pos: new THREE.Vector3(0, 0, 150),  lookAt: new THREE.Vector3(0, 0, 0),   label: null },
-            { pos: new THREE.Vector3(60, 20, 100), lookAt: new THREE.Vector3(0, 0, 0),   label: 'EXPLORING THE CLUSTER' },
-            { pos: new THREE.Vector3(-40, -15, 80),lookAt: new THREE.Vector3(-5, 0, 5),  label: 'DEEP FIELD' },
-            { pos: new THREE.Vector3(30, 40, 90),  lookAt: new THREE.Vector3(0, 0, 0),   label: 'OVERVIEW' },
-            { pos: new THREE.Vector3(0, 0, 150),   lookAt: new THREE.Vector3(0, 0, 0),   label: null },
-        ];
-        this._waypointLabel = document.getElementById('waypoint-label');
-
-        // Wheel scroll (desktop)
         window.addEventListener('wheel', e => {
-            if (this.isModalOpen || !this._started) return;
-            this._scrollTarget = Math.max(0, Math.min(1, this._scrollTarget + e.deltaY * 0.00015));
+            if (this.isModalOpen || !this._started || this.drawerEl?.classList.contains('open')) return;
+            // Smooth momentum impulse (feels silky on both mouse wheel & trackpad)
+            this._scrollVel += e.deltaY * 0.00018;
+            this._scrollVel = Math.max(-0.04, Math.min(0.04, this._scrollVel));
         }, { passive: true });
     }
 
@@ -1059,12 +1049,16 @@ export default class Experience {
         gsap.set(cam, { fov: 110 });
         cam.updateProjectionMatrix();
 
-        gsap.timeline({ delay: 0.15 })
-            .to(cam.position, { x: 0, y: 14, z: this.isMobile ? 108 : 118, duration: 4.2, ease: 'expo.out' })
+        this.camera._introActive = true;
+        gsap.timeline({
+            delay: 0.15,
+            onComplete: () => { this.camera._introActive = false; }
+        })
+            .to(cam.position, { x: 0, y: 14, z: this.isMobile ? 108 : 118, duration: 4.0, ease: 'expo.out' })
             .to(cam, { fov: 48, duration: 2.6, ease: 'power4.out',
                 onUpdate: () => cam.updateProjectionMatrix() }, '<0.2')
-            .from(rig.rotation, { y: -Math.PI * 1.5, duration: 4.5, ease: 'power2.out' }, '<')
-            .from(rig.rotation, { z: 0.35, duration: 3.0, ease: 'power3.out' }, '<0.3');
+            .from(rig.rotation, { y: -Math.PI * 1.5, duration: 4.2, ease: 'power2.out' }, '<')
+            .from(rig.rotation, { z: 0.35, duration: 2.8, ease: 'power3.out' }, '<0.3');
     }
 
         resize() {
@@ -1098,29 +1092,11 @@ export default class Experience {
             if (this.hudEl.z) this.hudEl.z.textContent = `Z:${p.z.toFixed(1)}`;
         }
 
-        if (this._started && this._waypoints) {
-            this._scrollProgress += (this._scrollTarget - this._scrollProgress) * 0.025;
-            const total = this._waypoints.length - 1;
-            const raw = this._scrollProgress * total;
-            const idx = Math.min(Math.floor(raw), total - 1);
-            const t2  = raw - idx;
-            const wp0 = this._waypoints[idx];
-            const wp1 = this._waypoints[idx + 1] || wp0;
-
-            if (!this.isModalOpen && !this._bhCinematicActive && this._scrollProgress > 0.01) {
-                const cam = this.camera.instance;
-                const tp = new THREE.Vector3().lerpVectors(wp0.pos, wp1.pos, t2);
-                cam.position.lerp(tp, 0.012);
-                cam.updateProjectionMatrix();
-            }
-
-            const curWp = this._waypoints[Math.round(this._scrollProgress * total)];
-            if (curWp?.label && this._waypointLabel) {
-                this._waypointLabel.textContent = curWp.label;
-                this._waypointLabel.classList.add('show');
-            } else if (this._waypointLabel) {
-                this._waypointLabel.classList.remove('show');
-            }
+        if (this._started && !this.isModalOpen && !this._bhCinematicActive) {
+            const dt = Math.min((this.time?.delta || 16) / 1000, 0.05);
+            this._scrollProgress = Math.max(0, Math.min(1, this._scrollProgress + this._scrollVel));
+            this._scrollVel *= Math.exp(-7.5 * dt);
+            this.camera?.setScrollOffset?.(this._scrollProgress);
         }
     }
 }
