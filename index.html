@@ -3,268 +3,189 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0"/>
-<meta name="theme-color" content="#020308"/>
-<meta name="description" content="Rokan S. F. — Paradigm Shift Engine. Founder of Archipelago Dynamics, Fullstack, DevOps, Android & Web3 Architect."/>
-<title>ROKAN S. F. // PARADIGM SHIFT ENGINE</title>
+<meta name="theme-color" content="#050507"/>
+<meta name="description" content="Rokan S. F. — Founder of Archipelago Dynamics, Fullstack, DevOps & Web3 Architect."/>
+<title>Rokan S. F. — Spatial Portfolio</title>
 <link rel="icon" type="image/svg+xml" href="./assets/R.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script type="module" crossorigin src="/porto/assets/index-C9uaY06A.js"></script>
+  <script type="module" crossorigin src="/porto/assets/index-BI1M_gJ_.js"></script>
   <link rel="modulepreload" crossorigin href="/porto/assets/three-Drf7NGwV.js">
   <link rel="modulepreload" crossorigin href="/porto/assets/gsap-DDlvirwQ.js">
-  <link rel="stylesheet" crossorigin href="/porto/assets/index-BWY9pwOk.css">
+  <link rel="stylesheet" crossorigin href="/porto/assets/index-hbbvmeST.css">
 </head>
 <body data-paradigm="singularity">
 
-<!-- ── PRELOADER — SINGULARITY IGNITION ───────── -->
+<!-- ── PRELOADER ──────────────────────────────── -->
 <div id="preloader">
-    <div class="hud-lines"></div>
+    <div class="loader-aura" aria-hidden="true"></div>
     <div class="loader-content">
-        <div class="loader-badge">
-            <span class="loader-badge-dot"></span>
-            <span>ARCHIPELAGO DYNAMICS // PARADIGM ENGINE v4.0</span>
-        </div>
-        <h1 data-text="ROKAN S.F.">ROKAN S.F.</h1>
-        <p class="sub">Founder · Systems Architect · Apex Humanity</p>
+        <span class="loader-kicker">Archipelago Dynamics</span>
+        <h1 data-text="Rokan S. F.">Rokan S. F.</h1>
+        <p class="sub">Founder · Systems Architect · Engineer</p>
         <div class="loader-progress-wrap">
             <div class="bar-track"><div class="bar-fill"></div></div>
             <div class="loader-meta">
-                <span class="loader-status" id="loader-status">Bending spacetime fabric...</span>
+                <span class="loader-status" id="loader-status">Preparing space...</span>
                 <span class="loader-pct" id="loader-pct">0%</span>
             </div>
         </div>
-        <button id="start-btn" type="button" disabled>// INITIALIZING SINGULARITY //</button>
+        <button id="start-btn" type="button" disabled>Initializing...</button>
     </div>
 </div>
 
-<!-- ── 3D WEBGL SANCTUARY CANVAS ──────────────── -->
+<!-- ── 3D CANVAS ──────────────────────────────── -->
 <canvas class="webgl"></canvas>
 
-<!-- ── PERIMETER ARCHITECTURAL FRAME ──────────── -->
-<div class="paradigm-frame" aria-hidden="true">
-    <div class="pf-corner pf-corner--tl"></div>
-    <div class="pf-corner pf-corner--tr"></div>
-    <div class="pf-corner pf-corner--bl"></div>
-    <div class="pf-corner pf-corner--br"></div>
-    <div class="pf-axis pf-axis--left">
-        <span>090°N</span><span>045°</span><span>000°</span><span>045°S</span>
-    </div>
-    <div class="pf-axis pf-axis--right">
-        <span>SYS.OK</span><span>GRID.ON</span><span>WARP.RDY</span><span>APEX.01</span>
-    </div>
-</div>
-
-<!-- ── TOP ARCHITECTURAL HUD BAR ──────────────── -->
+<!-- ── TOP NAVIGATION BAR (iOS Frosted Bar) ───── -->
 <header class="hud-header" id="hud-header">
-    <!-- Left: Identity + Telemetry -->
+    <!-- Left: Identity -->
     <div class="header-left">
-        <button type="button" class="logo" id="logo-trigger" title="Triple-click for Matrix Overdrive">
-            <span class="logo-mark">RSF</span>
+        <button type="button" class="logo" id="logo-trigger" title="Triple-click for Matrix Mode">
+            <span>RSF</span>
         </button>
         <div class="brand-meta">
             <div class="brand-name">
-                <span>ROKAN S. F.</span>
-                <span class="brand-status" title="Singularity Online"></span>
+                <span>Rokan S. F.</span>
+                <span class="brand-status" title="Online"></span>
             </div>
-            <div class="brand-telemetry">
-                <span id="hud-x">X:0.0</span>
-                <span id="hud-y">Y:14.0</span>
-                <span id="hud-z">Z:118.0</span>
-                <span class="bt-sep">//</span>
-                <span id="hud-visitors">164 NODES</span>
-            </div>
+            <span class="brand-role">Founder · Systems Architect</span>
         </div>
     </div>
 
-    <!-- Center: Interactive 3-Paradigm Reality Switcher -->
-    <div class="paradigm-switcher" role="group" aria-label="Shift Paradigm Reality">
-        <span class="ps-label">PARADIGM</span>
-        <button type="button" class="ps-btn active" data-paradigm="singularity" title="Paradigm I: Solar Singularity (Key: 1)">
-            <span class="ps-num">I</span>
-            <span class="ps-name">Singularity</span>
-        </button>
-        <button type="button" class="ps-btn" data-paradigm="architect" title="Paradigm II: Quantum Architect (Key: 2)">
-            <span class="ps-num">II</span>
-            <span class="ps-name">Architect</span>
-        </button>
-        <button type="button" class="ps-btn" data-paradigm="apex" title="Paradigm III: Apex Humanity (Key: 3)">
-            <span class="ps-num">III</span>
-            <span class="ps-name">Apex Humanity</span>
-        </button>
+    <!-- Center: iOS Segmented Atmosphere Control -->
+    <div class="paradigm-switcher" role="group" aria-label="Atmosphere Mode">
+        <button type="button" class="ps-btn active" data-paradigm="singularity" title="Obsidian (Key: 1)">Obsidian</button>
+        <button type="button" class="ps-btn" data-paradigm="architect" title="Slate (Key: 2)">Slate</button>
+        <button type="button" class="ps-btn" data-paradigm="apex" title="Warmth (Key: 3)">Warmth</button>
     </div>
 
-    <!-- Right: Tactical Actions -->
+    <!-- Right: Clean Actions -->
     <div class="header-actions">
         <button type="button" class="hud-action-btn hud-action-btn--primary" id="index-btn" aria-expanded="false" aria-controls="quick-drawer">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
-            <span>Command Matrix</span>
-            <kbd class="hud-kbd">I</kbd>
+            <span>Index</span>
         </button>
 
         <a class="hud-action-btn" href="./assets/PORTOFOLIO_ROKAN.pdf" target="_blank" rel="noopener">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <span>CV</span>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M5 11L11 5M11 5H6.5M11 5V9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>CV.PDF</span>
         </a>
 
-        <button type="button" class="audio-btn" id="audio-btn" aria-label="Toggle audio">
+        <button type="button" class="audio-btn" id="audio-btn" aria-label="Toggle sound">
             <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-            <span id="audio-text">SYNTH ON</span>
+            <span id="audio-text">Sound</span>
         </button>
     </div>
 </header>
 
-<!-- ── SUB-HEADER CONSTELLATION FILTER PILLS ──── -->
-<nav class="hud-filters" id="hud-filters" aria-label="Filter 3D Relics">
-    <button type="button" class="filter-pill active" data-filter="all">All Relics <span class="pill-count">13</span></button>
-    <button type="button" class="filter-pill" data-filter="origin">Origin Core</button>
+<!-- ── SUB-HEADER FILTER PILLS ────────────────── -->
+<nav class="hud-filters" id="hud-filters" aria-label="Filter projects">
+    <button type="button" class="filter-pill active" data-filter="all">All <span class="pill-count">13</span></button>
+    <button type="button" class="filter-pill" data-filter="origin">About</button>
     <button type="button" class="filter-pill" data-filter="web">Web &amp; Cloud</button>
     <button type="button" class="filter-pill" data-filter="mobile">Android</button>
-    <button type="button" class="filter-pill" data-filter="infra">Infra &amp; Dyson</button>
-    <button type="button" class="filter-pill" data-filter="web3">Web3 Obelisk</button>
-    <button type="button" class="filter-pill" data-filter="credentials">Vault</button>
+    <button type="button" class="filter-pill" data-filter="infra">Infrastructure</button>
+    <button type="button" class="filter-pill" data-filter="web3">Web3</button>
+    <button type="button" class="filter-pill" data-filter="credentials">Credentials</button>
 </nav>
 
-<!-- ── LEFT 3D RELIC INTERACTION HUD (Visible during Close-Up Orbit) ── -->
+<!-- ── LEFT 3D CLOSE-UP CONTROLS ──────────────── -->
 <div class="relic-viewport-hud" id="relic-viewport-hud" aria-hidden="true">
-    <div class="rvh-reticle">
-        <div class="rvh-ring rvh-ring--outer"></div>
-        <div class="rvh-ring rvh-ring--inner"></div>
-        <span class="rvh-cross rvh-cross--t"></span>
-        <span class="rvh-cross rvh-cross--b"></span>
-        <span class="rvh-cross rvh-cross--l"></span>
-        <span class="rvh-cross rvh-cross--r"></span>
-    </div>
     <div class="rvh-controls">
-        <div class="rvh-Hint">DRAG 3D RELIC TO SPIN · LIVE GLSL CORE</div>
+        <span class="rvh-hint">Drag object to rotate</span>
         <div class="rvh-btn-row">
-            <button type="button" class="rvh-btn rvh-btn--pulse" id="pulse-relic-btn">
-                <span>⚡ PULSE 3D CORE</span>
-            </button>
-            <button type="button" class="rvh-btn" id="exit-orbit-btn">
-                <span>← SANCTUARY OVERVIEW</span>
-            </button>
+            <button type="button" class="rvh-btn" id="pulse-relic-btn">Pulse</button>
+            <button type="button" class="rvh-btn rvh-btn--ghost" id="exit-orbit-btn">Overview</button>
         </div>
     </div>
 </div>
 
-<!-- ── BOTTOM ORBITAL COMPASS & TIMELINE DIAL ─── -->
+<!-- ── BOTTOM DYNAMIC PILL DOCK ───────────────── -->
 <div class="hud-dock" id="hud-dock">
     <div class="orbital-compass">
-        <!-- 13-Node Interactive Tick Dial -->
-        <div class="compass-ticks" id="compass-ticks" role="tablist" aria-label="Relic Orbital Dial"></div>
-
-        <!-- Main Teleporter Pod -->
         <div class="compass-pod">
-            <button type="button" class="dock-nav-btn" id="prev-node-btn" title="Warp to Previous Relic (Left Arrow)" aria-label="Previous Relic">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="nav-btn-label">PREV</span>
+            <button type="button" class="dock-nav-btn" id="prev-node-btn" title="Previous (Left Arrow)" aria-label="Previous">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M10 3.5L5.5 8 10 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
 
-            <button type="button" class="dock-current-node" id="dock-current-btn" title="Click to fly camera into Close-Up Orbit">
-                <span class="dock-node-kicker" id="dock-node-kicker">00 // ORIGIN CORE</span>
-                <span class="dock-node-title" id="dock-node-title">Rokan S. F. — Engage Close-Up Orbit ↗</span>
+            <button type="button" class="dock-current-node" id="dock-current-btn" title="Open details">
+                <span class="dock-node-kicker" id="dock-node-kicker">00 · Origin</span>
+                <span class="dock-node-title" id="dock-node-title">Rokan S. F.</span>
             </button>
 
-            <button type="button" class="dock-nav-btn" id="next-node-btn" title="Warp to Next Relic (Right Arrow)" aria-label="Next Relic">
-                <span class="nav-btn-label">NEXT</span>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <button type="button" class="dock-nav-btn" id="next-node-btn" title="Next (Right Arrow)" aria-label="Next">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
         </div>
 
-        <!-- Bottom Quick Bar -->
-        <div class="compass-subbar">
-            <button type="button" class="compass-link-btn" id="about-quick-btn">
-                <span class="ctrl-dot"></span>
-                <span>Inspect Origin (Rokan S.F.)</span>
-            </button>
-            <span class="compass-manifesto" id="compass-manifesto">"Move cursor to warp spacetime · Click any 3D Relic to enter close-up orbit"</span>
-            <button type="button" class="compass-link-btn" id="reset-cam-btn">
-                <span>Reset Horizon</span>
-            </button>
-        </div>
+        <div class="compass-ticks" id="compass-ticks" role="tablist" aria-label="Quick select"></div>
     </div>
 </div>
 
-<!-- ── COMMAND MATRIX DRAWER ──────────────────── -->
-<aside class="quick-drawer" id="quick-drawer" aria-hidden="true" aria-label="Command Matrix">
+<!-- ── INDEX DRAWER (iOS Slide-Over Sheet) ────── -->
+<aside class="quick-drawer" id="quick-drawer" aria-hidden="true" aria-label="Project Index">
     <div class="drawer-backdrop" id="drawer-backdrop"></div>
     <div class="drawer-panel">
         <div class="drawer-header">
             <div>
-                <span class="drawer-kicker">// PARADIGM COMMAND MATRIX · 13 RELICS</span>
-                <h2 class="drawer-title">Sanctuary Index</h2>
+                <span class="drawer-kicker">13 Entries</span>
+                <h2 class="drawer-title">Index</h2>
             </div>
-            <button type="button" class="close-btn" id="drawer-close-btn" aria-label="Close matrix">
-                <span class="close-icon">✕</span>
+            <button type="button" class="close-btn" id="drawer-close-btn" aria-label="Close index">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             </button>
         </div>
         <div class="drawer-list" id="drawer-list"></div>
     </div>
 </aside>
 
-<!-- ── ASYMMETRIC ARCHITECTURAL DOSSIER BLADE (Right Wing) ──── -->
+<!-- ── RIGHT DETAIL SHEET (iOS Floating Sheet) ── -->
 <div id="detail-panel" class="overlay" role="dialog" aria-modal="false" aria-labelledby="panel-title">
     <canvas id="modal-particles" class="modal-particles"></canvas>
 
     <div class="modal-card">
-        <!-- Top Schematic Header Banner inside the Blade -->
+        <!-- Header Artwork -->
         <div class="modal-visual-col">
-            <div class="modal-scanlines"></div>
             <img id="panel-image" class="modal-img" src="" alt=""/>
             <div class="modal-img-overlay"></div>
-            <div class="modal-corner modal-corner--tl"></div>
-            <div class="modal-corner modal-corner--br"></div>
-
-            <div class="modal-type-badge" id="modal-type-badge">RELIC LOG</div>
+            <div class="modal-type-badge" id="modal-type-badge">Project</div>
 
             <div class="modal-visual-meta" id="modal-visual-meta">
                 <div class="mv-item">
-                    <span class="mv-label">ARCHITECT ROLE</span>
+                    <span class="mv-label">Role</span>
                     <span class="mv-val" id="modal-meta-role">Lead Engineer</span>
                 </div>
                 <div class="mv-item">
-                    <span class="mv-label">EPOCH</span>
+                    <span class="mv-label">Timeline</span>
                     <span class="mv-val" id="modal-meta-year">2024</span>
                 </div>
                 <div class="mv-item">
-                    <span class="mv-label">STATE</span>
-                    <span class="mv-val" id="modal-status-text">ONLINE</span>
+                    <span class="mv-label">Status</span>
+                    <span class="mv-val" id="modal-status-text">Active</span>
                 </div>
-            </div>
-
-            <div class="modal-status-bar">
-                <span class="modal-status-dot"></span>
-                <span>3D TELEMETRY LOCKED</span>
-                <span class="modal-status-coords" id="modal-coords">00.0 · 00.0</span>
             </div>
         </div>
 
-        <!-- Scrollable Dossier Content -->
+        <!-- Scrollable Content -->
         <div class="modal-content-col">
             <div class="modal-topbar">
                 <div class="modal-topbar-left">
-                    <span class="modal-code-badge" id="panel-code">SYS-00</span>
-                    <span class="modal-topbar-line"></span>
+                    <span class="modal-code-badge" id="panel-code">00</span>
                     <span class="modal-kicker" id="panel-kicker"></span>
                 </div>
-                <div class="modal-topbar-actions">
-                    <button type="button" class="blade-pulse-btn" id="blade-pulse-btn" title="Send shockwave to 3D Relic">
-                        ⚡ Pulse 3D
-                    </button>
-                    <button type="button" class="close-btn" id="close-btn" aria-label="Exit Close-Up Orbit">
-                        <span class="close-icon">✕</span>
-                    </button>
-                </div>
+                <button type="button" class="close-btn" id="close-btn" aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                </button>
             </div>
 
             <div class="modal-title-block">
                 <h2 class="modal-title" id="panel-title"></h2>
                 <p class="modal-subtitle" id="panel-subtitle"></p>
-                <div class="modal-title-line"></div>
             </div>
 
             <p class="modal-desc" id="panel-desc"></p>
@@ -274,28 +195,34 @@
             <div class="modal-footer">
                 <div class="modal-footer-nav">
                     <button type="button" class="modal-nav-btn" id="modal-prev-btn">
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <span>Warp Prev</span>
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M10 3.5L5.5 8 10 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Prev</span>
                     </button>
                     <button type="button" class="modal-nav-btn" id="modal-next-btn">
-                        <span>Warp Next</span>
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Next</span>
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
 
-                <div class="modal-footer-right">
-                    <div class="modal-footer-meta" id="modal-footer-meta"></div>
-                    <a class="modal-btn" id="panel-link" href="#" target="_blank" rel="noopener">
-                        <span class="modal-btn-text">Open Artifact</span>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                    </a>
-                </div>
+                <a class="modal-btn" id="panel-link" href="#" target="_blank" rel="noopener">
+                    <span class="modal-btn-text">Open</span>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                </a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ── WAYPOINT & HINTS ───────────────────────── -->
+<!-- ── HIDDEN TELEMETRY / EASTER EGG HOOKS ────── -->
+<div style="display:none">
+    <span id="hud-x"></span><span id="hud-y"></span><span id="hud-z"></span>
+    <span id="hud-visitors"></span><span id="hud-sims"></span>
+    <span id="modal-coords"></span><span id="modal-footer-meta"></span>
+    <span id="compass-manifesto"></span>
+    <button id="about-quick-btn" type="button"></button>
+    <button id="reset-cam-btn" type="button"></button>
+    <button id="blade-pulse-btn" type="button"></button>
+</div>
 <div class="waypoint-label" id="waypoint-label"></div>
 <div class="scroll-hint" id="scroll-hint" style="display:none"></div>
 <p class="hint-text" id="hint-text" style="display:none"></p>
@@ -303,54 +230,22 @@
 <!-- ── GLITCH OVERLAY ────────────────────────── -->
 <div id="glitch-overlay">
     <div class="glitch-scan"></div>
-    <div class="glitch-text">MATRIX OVERDRIVE ACTIVE</div>
+    <div class="glitch-text">MATRIX MODE</div>
     <div class="glitch-code" id="glitch-code"></div>
-    <button type="button" class="glitch-exit" onclick="window.experience?._triggerGlitch()">[ EXIT MATRIX ]</button>
+    <button type="button" class="glitch-exit" onclick="window.experience?._triggerGlitch()">Exit</button>
 </div>
 
-<!-- ── SECRET / PARADIGM TRANSMISSION ────────── -->
+<!-- ── TOAST NOTIFICATION (iOS Dynamic Pill) ──── -->
 <div id="secret-msg" role="status" aria-live="polite"></div>
 
-<!-- ── EASTER EGG HINTS ──────────────────────── -->
-<div class="ee-hint" id="ee-hint">
-    <span>// PARADIGM [1·2·3] · KONAMI · APEX · RSF · PALE · BH×5 //</span>
-</div>
-
-<!-- ── PALE BLUE DOT OVERLAY ─────────────────── -->
-<div id="pbd-overlay">
-    <div class="pbd-dot"></div>
-    <div class="pbd-quote"></div>
-    <div class="pbd-sub">— scroll to return —</div>
-</div>
-
-<!-- ── REALITY COLLAPSE OVERLAY ──────────────── -->
-<div id="rc-overlay">
-    <div class="rc-rain" id="rc-rain"></div>
-</div>
-
-<!-- ── DREAM ARCHIVE OVERLAY ─────────────────── -->
-<div id="dream-overlay">
-    <div class="dream-fragment"></div>
-    <div class="dream-text"></div>
-    <div class="dream-source">— Memory Core Fragment //</div>
-</div>
-
-<!-- ── ARCHIPELAGO OVERLAY ───────────────────── -->
-<div id="arch-overlay" style="display:none" aria-hidden="true">
-    <div class="arch-text">ARCHIPELAGO DYNAMICS<br><span>rooted in the islands · reaching for the stars</span></div>
-    <div class="arch-islands"></div>
-</div>
-
-<!-- ── PATIENCE OVERLAY ──────────────────────── -->
-<div id="patience-overlay">
-    <div class="patience-text"></div>
-    <div class="patience-sub">— stay still. breathe. —</div>
-</div>
-
-<div id="tear-hint">hold anywhere to tear reality</div>
+<!-- ── PALE BLUE DOT & DREAM OVERLAYS ─────────── -->
+<div id="pbd-overlay"><div class="pbd-dot"></div><div class="pbd-quote"></div><div class="pbd-sub">Scroll to return</div></div>
+<div id="rc-overlay"><div class="rc-rain" id="rc-rain"></div></div>
+<div id="dream-overlay"><div class="dream-fragment"></div><div class="dream-text"></div><div class="dream-source">Memory Core</div></div>
+<div id="patience-overlay"><div class="patience-text"></div><div class="patience-sub">Stay still.</div></div>
 
 <script>
-const msgs=['Bending spacetime fabric...','Igniting singularity core...','Aligning Citadel gimbals...','Synthesizing sacred geometry...','Calibrating quantum relics...','Neural link established...'];
+const msgs=['Preparing space...','Calibrating optics...','Loading geometry...','Almost ready...'];
 let mi=0;const el=document.getElementById('loader-status');
 const statusIv=setInterval(()=>{
     const btn=document.getElementById('start-btn');
@@ -360,7 +255,7 @@ const statusIv=setInterval(()=>{
 },1600);
 
 const gc=document.getElementById('glitch-code');
-const chars='01アイウエオカキクケコサシスセソ∇∆∑∏∫APEX RSF PARADIGM://';
+const chars='01アイウエオカキクケコサシスセソRSF';
 setInterval(()=>{
     if(gc&&document.getElementById('glitch-overlay')?.classList.contains('active')){
         const line=Array.from({length:24},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
@@ -370,19 +265,6 @@ setInterval(()=>{
 },80);
 
 window.addEventListener('bhClick',()=>window._bhClickCallback?.());
-
-const rcRain = document.getElementById('rc-rain');
-function spawnRCLine(){
-    if(!document.getElementById('rc-overlay')?.classList.contains('active')) return;
-    const d=document.createElement('div');
-    d.className='rc-line';
-    d.style.left=Math.random()*100+'%';
-    d.style.animationDuration=(.4+Math.random()*.6)+'s';
-    d.textContent=Array.from({length:18},()=>'01 アイウエ∇∑'[Math.floor(Math.random()*13)]).join('');
-    rcRain.appendChild(d);
-    setTimeout(()=>d.remove(),1200);
-}
-setInterval(spawnRCLine,40);
 </script>
 </body>
 </html>
